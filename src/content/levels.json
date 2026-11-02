@@ -40,7 +40,7 @@
       ],
       "par": {
         "seconds": 59,
-        "multiplier": 1.6,
+        "multiplierTenths": 16,
         "minLoads": 2,
         "solution": [
           {
@@ -109,7 +109,7 @@
       ],
       "par": {
         "seconds": 70,
-        "multiplier": 1.6,
+        "multiplierTenths": 16,
         "minLoads": 2,
         "solution": [
           {
@@ -192,7 +192,7 @@
       ],
       "par": {
         "seconds": 85,
-        "multiplier": 1.6,
+        "multiplierTenths": 16,
         "minLoads": 2,
         "solution": [
           {
@@ -258,7 +258,7 @@
       ],
       "par": {
         "seconds": 104,
-        "multiplier": 1.4,
+        "multiplierTenths": 14,
         "minLoads": 2,
         "solution": [
           {
@@ -341,7 +341,7 @@
       ],
       "par": {
         "seconds": 116,
-        "multiplier": 1.4,
+        "multiplierTenths": 14,
         "minLoads": 3,
         "solution": [
           {
@@ -446,7 +446,7 @@
       ],
       "par": {
         "seconds": 126,
-        "multiplier": 1.4,
+        "multiplierTenths": 14,
         "minLoads": 3,
         "solution": [
           {
@@ -541,7 +541,7 @@
       ],
       "par": {
         "seconds": 81,
-        "multiplier": 1.3,
+        "multiplierTenths": 13,
         "minLoads": 2,
         "solution": [
           {
@@ -640,7 +640,7 @@
       ],
       "par": {
         "seconds": 95,
-        "multiplier": 1.3,
+        "multiplierTenths": 13,
         "minLoads": 3,
         "solution": [
           {
@@ -766,7 +766,7 @@
       ],
       "par": {
         "seconds": 127,
-        "multiplier": 1.3,
+        "multiplierTenths": 13,
         "minLoads": 4,
         "solution": [
           {
@@ -862,7 +862,7 @@
       ],
       "par": {
         "seconds": 75,
-        "multiplier": 1.6,
+        "multiplierTenths": 16,
         "minLoads": 2,
         "solution": [
           {
@@ -972,7 +972,7 @@
       ],
       "par": {
         "seconds": 111,
-        "multiplier": 1.3,
+        "multiplierTenths": 13,
         "minLoads": 3,
         "solution": [
           {
@@ -1108,7 +1108,7 @@
       ],
       "par": {
         "seconds": 125,
-        "multiplier": 1.2,
+        "multiplierTenths": 12,
         "minLoads": 4,
         "solution": [
           {

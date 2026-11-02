@@ -1,0 +1,1399 @@
+{
+  "schema": 1,
+  "notes": "Load format: {items:[ids], bags:[[ids]]}. Ids are def ids (instance ids 'def#n' also accepted). Violations are [rule, severity] pairs, sorted. wetBulkTenths is an integer (wet bulk x 10).",
+  "traps": [
+    {
+      "name": "1-2 red tee with lights",
+      "load": {
+        "items": [
+          "tee_red",
+          "tee_white",
+          "shirt_white"
+        ],
+        "bags": []
+      },
+      "expect": {
+        "weight": 13,
+        "dryBulk": 16,
+        "wetBulkTenths": 160,
+        "zone": "light",
+        "jam": false,
+        "costMs": 7067,
+        "violations": [
+          [
+            "COLOR_BLEED",
+            "fatal"
+          ]
+        ],
+        "illegal": []
+      }
+    },
+    {
+      "name": "1-3 grey tee with lights",
+      "load": {
+        "items": [
+          "tee_grey",
+          "tee_white"
+        ],
+        "bags": []
+      },
+      "expect": {
+        "weight": 8,
+        "dryBulk": 10,
+        "wetBulkTenths": 100,
+        "zone": "light",
+        "jam": false,
+        "costMs": 6667,
+        "violations": [
+          [
+            "COLOR_DYE",
+            "fatal"
+          ]
+        ],
+        "illegal": []
+      }
+    },
+    {
+      "name": "1-3 striped shirt with lights",
+      "load": {
+        "items": [
+          "shirt_striped",
+          "shirt_white"
+        ],
+        "bags": []
+      },
+      "expect": {
+        "weight": 10,
+        "dryBulk": 12,
+        "wetBulkTenths": 120,
+        "zone": "light",
+        "jam": false,
+        "costMs": 6800,
+        "violations": [
+          [
+            "COLOR_DYE",
+            "fatal"
+          ]
+        ],
+        "illegal": []
+      }
+    },
+    {
+      "name": "2-2 dark topping up lights",
+      "load": {
+        "items": [
+          "hoodie_white",
+          "tee_white",
+          "tee_black"
+        ],
+        "bags": []
+      },
+      "expect": {
+        "weight": 20,
+        "dryBulk": 26,
+        "wetBulkTenths": 292,
+        "zone": "light",
+        "jam": false,
+        "costMs": 7733,
+        "violations": [
+          [
+            "COLOR_DYE",
+            "fatal"
+          ]
+        ],
+        "illegal": []
+      }
+    },
+    {
+      "name": "2-3 puffer + hoodie x2 + trousers",
+      "load": {
+        "items": [
+          "puffer_navy",
+          "hoodie_navy",
+          "hoodie_navy",
+          "trousers_black"
+        ],
+        "bags": []
+      },
+      "expect": {
+        "weight": 44,
+        "dryBulk": 82,
+        "wetBulkTenths": 1284,
+        "zone": "good",
+        "jam": true,
+        "costMs": 11467,
+        "violations": [],
+        "illegal": []
+      }
+    },
+    {
+      "name": "2-1 all darks in one load",
+      "load": {
+        "items": [
+          "jeans_blue",
+          "jeans_blue",
+          "jeans_blue",
+          "hoodie_navy",
+          "hoodie_navy",
+          "hoodie_navy",
+          "trousers_black",
+          "trousers_black",
+          "trousers_black"
+        ],
+        "bags": []
+      },
+      "expect": {
+        "weight": 102,
+        "dryBulk": 120,
+        "wetBulkTenths": 1296,
+        "zone": "overfull",
+        "jam": true,
+        "costMs": 14000,
+        "violations": [],
+        "illegal": []
+      }
+    },
+    {
+      "name": "3-2 white rag in lights",
+      "load": {
+        "items": [
+          "rag_white",
+          "tee_white",
+          "towel_white"
+        ],
+        "bags": []
+      },
+      "expect": {
+        "weight": 16,
+        "dryBulk": 19,
+        "wetBulkTenths": 214,
+        "zone": "light",
+        "jam": false,
+        "costMs": 7267,
+        "violations": [
+          [
+            "HYG_DIRTY_WITH_LIGHT",
+            "fatal"
+          ],
+          [
+            "HYG_DIRTY_WITH_LIGHT",
+            "fatal"
+          ]
+        ],
+        "illegal": []
+      }
+    },
+    {
+      "name": "3-2 rag in clean darks",
+      "load": {
+        "items": [
+          "rag_grey",
+          "shirt_black",
+          "towel_navy"
+        ],
+        "bags": []
+      },
+      "expect": {
+        "weight": 17,
+        "dryBulk": 20,
+        "wetBulkTenths": 224,
+        "zone": "light",
+        "jam": false,
+        "costMs": 7333,
+        "violations": [
+          [
+            "HYG_DIRTY_WITH_DARK",
+            "major"
+          ],
+          [
+            "HYG_DIRTY_WITH_DARK",
+            "major"
+          ]
+        ],
+        "illegal": []
+      }
+    },
+    {
+      "name": "3-2 rags with jeans (grey/blue only)",
+      "load": {
+        "items": [
+          "rag_grey",
+          "rag_blue",
+          "jeans_blue"
+        ],
+        "bags": []
+      },
+      "expect": {
+        "weight": 18,
+        "dryBulk": 18,
+        "wetBulkTenths": 180,
+        "zone": "light",
+        "jam": false,
+        "costMs": 7200,
+        "violations": [],
+        "illegal": []
+      }
+    },
+    {
+      "name": "3-2 white rag with jeans (lint)",
+      "load": {
+        "items": [
+          "rag_white",
+          "rag_grey",
+          "jeans_blue"
+        ],
+        "bags": []
+      },
+      "expect": {
+        "weight": 18,
+        "dryBulk": 18,
+        "wetBulkTenths": 180,
+        "zone": "light",
+        "jam": false,
+        "costMs": 7200,
+        "violations": [
+          [
+            "COLOR_LINT",
+            "minor"
+          ]
+        ],
+        "illegal": []
+      }
+    },
+    {
+      "name": "3-2 white rag with white jacket",
+      "load": {
+        "items": [
+          "rag_white",
+          "jacket_white"
+        ],
+        "bags": []
+      },
+      "expect": {
+        "weight": 12,
+        "dryBulk": 20,
+        "wetBulkTenths": 200,
+        "zone": "light",
+        "jam": false,
+        "costMs": 7333,
+        "violations": [],
+        "illegal": []
+      }
+    },
+    {
+      "name": "3-3 light-wash jeans in lights",
+      "load": {
+        "items": [
+          "jeans_lightwash",
+          "tee_white"
+        ],
+        "bags": []
+      },
+      "expect": {
+        "weight": 18,
+        "dryBulk": 19,
+        "wetBulkTenths": 190,
+        "zone": "light",
+        "jam": false,
+        "costMs": 7267,
+        "violations": [
+          [
+            "COLOR_DYE",
+            "fatal"
+          ]
+        ],
+        "illegal": []
+      }
+    },
+    {
+      "name": "3-3 white jacket in lights",
+      "load": {
+        "items": [
+          "jacket_white",
+          "tee_white"
+        ],
+        "bags": []
+      },
+      "expect": {
+        "weight": 14,
+        "dryBulk": 23,
+        "wetBulkTenths": 230,
+        "zone": "light",
+        "jam": false,
+        "costMs": 7533,
+        "violations": [
+          [
+            "HYG_DIRTY_WITH_LIGHT",
+            "fatal"
+          ]
+        ],
+        "illegal": []
+      }
+    },
+    {
+      "name": "3-3 red towel in lights",
+      "load": {
+        "items": [
+          "towel_red",
+          "towel_white"
+        ],
+        "bags": []
+      },
+      "expect": {
+        "weight": 20,
+        "dryBulk": 24,
+        "wetBulkTenths": 288,
+        "zone": "light",
+        "jam": false,
+        "costMs": 7600,
+        "violations": [
+          [
+            "COLOR_BLEED",
+            "fatal"
+          ]
+        ],
+        "illegal": []
+      }
+    },
+    {
+      "name": "3-3 white towel in darks",
+      "load": {
+        "items": [
+          "towel_white",
+          "towel_navy"
+        ],
+        "bags": []
+      },
+      "expect": {
+        "weight": 20,
+        "dryBulk": 24,
+        "wetBulkTenths": 288,
+        "zone": "light",
+        "jam": false,
+        "costMs": 7600,
+        "violations": [
+          [
+            "COLOR_DYE",
+            "fatal"
+          ]
+        ],
+        "illegal": []
+      }
+    },
+    {
+      "name": "3-3 jacket_navy in clean darks (jam)",
+      "load": {
+        "items": [
+          "curtain_dark",
+          "towel_navy",
+          "towel_red",
+          "shirt_black",
+          "tee_black",
+          "jeans_lightwash",
+          "trousers_black",
+          "jacket_navy"
+        ],
+        "bags": []
+      },
+      "expect": {
+        "weight": 79,
+        "dryBulk": 101,
+        "wetBulkTenths": 1106,
+        "zone": "overfull",
+        "jam": true,
+        "costMs": 12733,
+        "violations": [],
+        "illegal": []
+      }
+    },
+    {
+      "name": "3-3 puffer in dirty load (jam + lint)",
+      "load": {
+        "items": [
+          "puffer_navy",
+          "rag_grey",
+          "rag_blue",
+          "rag_white",
+          "jacket_white"
+        ],
+        "bags": []
+      },
+      "expect": {
+        "weight": 28,
+        "dryBulk": 64,
+        "wetBulkTenths": 1040,
+        "zone": "light",
+        "jam": true,
+        "costMs": 10267,
+        "violations": [
+          [
+            "COLOR_LINT",
+            "minor"
+          ]
+        ],
+        "illegal": []
+      }
+    },
+    {
+      "name": "3-3 jeans with white rag (lint)",
+      "load": {
+        "items": [
+          "rag_grey",
+          "rag_blue",
+          "rag_white",
+          "jacket_white",
+          "jeans_lightwash"
+        ],
+        "bags": []
+      },
+      "expect": {
+        "weight": 30,
+        "dryBulk": 38,
+        "wetBulkTenths": 380,
+        "zone": "light",
+        "jam": false,
+        "costMs": 8533,
+        "violations": [
+          [
+            "COLOR_LINT",
+            "minor"
+          ]
+        ],
+        "illegal": []
+      }
+    },
+    {
+      "name": "4-1 loose sock",
+      "load": {
+        "items": [
+          "sock_white",
+          "tee_white"
+        ],
+        "bags": []
+      },
+      "expect": {
+        "weight": 6,
+        "dryBulk": 7,
+        "wetBulkTenths": 70,
+        "zone": "light",
+        "jam": false,
+        "costMs": 6467,
+        "violations": [
+          [
+            "SMALL_LOOSE",
+            "major"
+          ]
+        ],
+        "illegal": []
+      }
+    },
+    {
+      "name": "4-2 underwear in dirty load",
+      "load": {
+        "items": [
+          "rag_grey",
+          "undies_black"
+        ],
+        "bags": []
+      },
+      "expect": {
+        "weight": 4,
+        "dryBulk": 4,
+        "wetBulkTenths": 40,
+        "zone": "light",
+        "jam": false,
+        "costMs": 6267,
+        "violations": [
+          [
+            "HYG_DIRTY_WITH_DARK",
+            "major"
+          ],
+          [
+            "SMALL_LOOSE",
+            "major"
+          ]
+        ],
+        "illegal": []
+      }
+    },
+    {
+      "name": "4-2 mixed-color bag",
+      "load": {
+        "items": [
+          "tee_white"
+        ],
+        "bags": [
+          [
+            "sock_white",
+            "sock_black"
+          ]
+        ]
+      },
+      "expect": {
+        "weight": 10,
+        "dryBulk": 11,
+        "wetBulkTenths": 110,
+        "zone": "light",
+        "jam": false,
+        "costMs": 6733,
+        "violations": [
+          [
+            "COLOR_DYE",
+            "fatal"
+          ]
+        ],
+        "illegal": []
+      }
+    },
+    {
+      "name": "4-2 worn socks loose in dirty load",
+      "load": {
+        "items": [
+          "rag_grey",
+          "sock_worn_navy"
+        ],
+        "bags": []
+      },
+      "expect": {
+        "weight": 4,
+        "dryBulk": 4,
+        "wetBulkTenths": 40,
+        "zone": "light",
+        "jam": false,
+        "costMs": 6267,
+        "violations": [
+          [
+            "SMALL_LOOSE",
+            "major"
+          ]
+        ],
+        "illegal": []
+      }
+    },
+    {
+      "name": "empty bag in drum with one tee (counts W2 B2, no violation)",
+      "load": {
+        "items": [
+          "tee_white"
+        ],
+        "bags": [
+          []
+        ]
+      },
+      "expect": {
+        "weight": 6,
+        "dryBulk": 7,
+        "wetBulkTenths": 70,
+        "zone": "light",
+        "jam": false,
+        "costMs": 6467,
+        "violations": [],
+        "illegal": []
+      }
+    }
+  ],
+  "illegal": [
+    {
+      "name": "bag over capacity",
+      "load": {
+        "items": [
+          "tee_white"
+        ],
+        "bags": [
+          [
+            "undies_white",
+            "undies_white",
+            "undies_white",
+            "undies_white",
+            "undies_white",
+            "undies_white",
+            "undies_white"
+          ]
+        ]
+      },
+      "expect": [
+        "BAG_CAPACITY"
+      ]
+    },
+    {
+      "name": "three bags",
+      "load": {
+        "items": [
+          "tee_white"
+        ],
+        "bags": [
+          [
+            "sock_white"
+          ],
+          [
+            "sock_white"
+          ],
+          [
+            "sock_white"
+          ]
+        ]
+      },
+      "expect": [
+        "BAG_COUNT"
+      ]
+    },
+    {
+      "name": "non-small item in a bag",
+      "load": {
+        "items": [
+          "tee_white"
+        ],
+        "bags": [
+          [
+            "tee_white"
+          ]
+        ]
+      },
+      "expect": [
+        "BAG_NOT_SMALL"
+      ]
+    },
+    {
+      "name": "three bags each over capacity reports each code once",
+      "load": {
+        "items": [
+          "tee_white"
+        ],
+        "bags": [
+          [
+            "undies_white",
+            "undies_white",
+            "undies_white",
+            "undies_white",
+            "undies_white",
+            "undies_white",
+            "undies_white"
+          ],
+          [
+            "undies_white",
+            "undies_white",
+            "undies_white",
+            "undies_white",
+            "undies_white",
+            "undies_white",
+            "undies_white"
+          ],
+          [
+            "undies_white",
+            "undies_white",
+            "undies_white",
+            "undies_white",
+            "undies_white",
+            "undies_white",
+            "undies_white"
+          ]
+        ]
+      },
+      "expect": [
+        "BAG_CAPACITY",
+        "BAG_COUNT"
+      ]
+    },
+    {
+      "name": "empty drum",
+      "load": {
+        "items": [],
+        "bags": []
+      },
+      "expect": [
+        "EMPTY_LOAD"
+      ]
+    },
+    {
+      "name": "duplicate instance",
+      "load": {
+        "items": [
+          "tee_white#1",
+          "tee_white#1"
+        ],
+        "bags": []
+      },
+      "expect": [
+        "DUPLICATE_ITEM"
+      ]
+    }
+  ],
+  "zones": [
+    {
+      "weight": 62,
+      "dryBulk": 69,
+      "zone": "light"
+    },
+    {
+      "weight": 63,
+      "dryBulk": 0,
+      "zone": "good"
+    },
+    {
+      "weight": 0,
+      "dryBulk": 70,
+      "zone": "good"
+    },
+    {
+      "weight": 81,
+      "dryBulk": 90,
+      "zone": "good"
+    },
+    {
+      "weight": 82,
+      "dryBulk": 0,
+      "zone": "tight"
+    },
+    {
+      "weight": 0,
+      "dryBulk": 91,
+      "zone": "tight"
+    },
+    {
+      "weight": 90,
+      "dryBulk": 100,
+      "zone": "tight"
+    },
+    {
+      "weight": 91,
+      "dryBulk": 0,
+      "zone": "overfull"
+    },
+    {
+      "weight": 0,
+      "dryBulk": 101,
+      "zone": "overfull"
+    },
+    {
+      "weight": 0,
+      "dryBulk": 0,
+      "zone": "light"
+    }
+  ],
+  "jam": [
+    {
+      "weight": 90,
+      "wetBulkTenths": 1000,
+      "jam": false
+    },
+    {
+      "weight": 91,
+      "wetBulkTenths": 0,
+      "jam": true
+    },
+    {
+      "weight": 0,
+      "wetBulkTenths": 1000,
+      "jam": false
+    },
+    {
+      "weight": 0,
+      "wetBulkTenths": 1001,
+      "jam": true
+    },
+    {
+      "weight": 90,
+      "wetBulkTenths": 1001,
+      "jam": true
+    }
+  ],
+  "cycleCosts": [
+    {
+      "weight": 13,
+      "dryBulk": 16,
+      "costMs": 7067
+    },
+    {
+      "weight": 60,
+      "dryBulk": 60,
+      "costMs": 10000
+    },
+    {
+      "weight": 80,
+      "dryBulk": 80,
+      "costMs": 11333
+    },
+    {
+      "weight": 90,
+      "dryBulk": 100,
+      "costMs": 12667
+    },
+    {
+      "weight": 6,
+      "dryBulk": 6,
+      "costMs": 6400
+    },
+    {
+      "weight": 22,
+      "dryBulk": 58,
+      "costMs": 9867
+    },
+    {
+      "weight": 7,
+      "dryBulk": 0,
+      "costMs": 6467
+    },
+    {
+      "weight": 0,
+      "dryBulk": 8,
+      "costMs": 6533
+    }
+  ],
+  "stars": [
+    {
+      "violations": [],
+      "jam": false,
+      "totalMs": 59000,
+      "parSeconds": 59,
+      "stars": 3
+    },
+    {
+      "violations": [],
+      "jam": false,
+      "totalMs": 59001,
+      "parSeconds": 59,
+      "stars": 2
+    },
+    {
+      "violations": [],
+      "jam": false,
+      "totalMs": 1,
+      "parSeconds": 59,
+      "stars": 3
+    },
+    {
+      "violations": [
+        [
+          "COLOR_LINT",
+          "minor"
+        ]
+      ],
+      "jam": false,
+      "totalMs": 1000,
+      "parSeconds": 59,
+      "stars": 1
+    },
+    {
+      "violations": [
+        [
+          "SMALL_LOOSE",
+          "major"
+        ]
+      ],
+      "jam": false,
+      "totalMs": 1000,
+      "parSeconds": 59,
+      "stars": 1
+    },
+    {
+      "violations": [
+        [
+          "COLOR_LINT",
+          "minor"
+        ],
+        [
+          "SMALL_LOOSE",
+          "major"
+        ]
+      ],
+      "jam": false,
+      "totalMs": 1000,
+      "parSeconds": 59,
+      "stars": 1
+    },
+    {
+      "violations": [
+        [
+          "COLOR_DYE",
+          "fatal"
+        ]
+      ],
+      "jam": false,
+      "totalMs": 1000,
+      "parSeconds": 59,
+      "stars": 0
+    },
+    {
+      "violations": [
+        [
+          "COLOR_DYE",
+          "fatal"
+        ],
+        [
+          "SMALL_LOOSE",
+          "major"
+        ]
+      ],
+      "jam": false,
+      "totalMs": 1000,
+      "parSeconds": 59,
+      "stars": 0
+    },
+    {
+      "violations": [],
+      "jam": true,
+      "totalMs": 1000,
+      "parSeconds": 59,
+      "stars": 0
+    },
+    {
+      "violations": [
+        [
+          "COLOR_LINT",
+          "minor"
+        ]
+      ],
+      "jam": true,
+      "totalMs": 1000,
+      "parSeconds": 59,
+      "stars": 0
+    }
+  ],
+  "rng": {
+    "fnv1a32": [
+      {
+        "input": "",
+        "hash": 2166136261
+      },
+      {
+        "input": "a",
+        "hash": 3826002220
+      },
+      {
+        "input": "14010:0:sock_white#1",
+        "hash": 98672653
+      },
+      {
+        "input": "12030:hamper",
+        "hash": 2532244932
+      }
+    ],
+    "mulberry32": [
+      {
+        "seed": 0,
+        "u32": [
+          1144304738,
+          1416247,
+          958946056,
+          627933444
+        ]
+      },
+      {
+        "seed": 1,
+        "u32": [
+          2693262067,
+          11749833,
+          2265367787,
+          4213581821
+        ]
+      },
+      {
+        "seed": 123456789,
+        "u32": [
+          1107202814,
+          4169434471,
+          3372958138,
+          885470128
+        ]
+      }
+    ],
+    "lostThresholdU32": 2147483648
+  },
+  "par": [
+    {
+      "levelId": "1-1",
+      "itemCount": 6,
+      "multiplierTenths": 16,
+      "sumCostMs": 14134,
+      "parSeconds": 59
+    },
+    {
+      "levelId": "1-2",
+      "itemCount": 8,
+      "multiplierTenths": 16,
+      "sumCostMs": 15200,
+      "parSeconds": 70
+    },
+    {
+      "levelId": "1-3",
+      "itemCount": 11,
+      "multiplierTenths": 16,
+      "sumCostMs": 16267,
+      "parSeconds": 85
+    },
+    {
+      "levelId": "2-1",
+      "itemCount": 16,
+      "multiplierTenths": 14,
+      "sumCostMs": 22533,
+      "parSeconds": 104
+    },
+    {
+      "levelId": "2-2",
+      "itemCount": 17,
+      "multiplierTenths": 14,
+      "sumCostMs": 30534,
+      "parSeconds": 116
+    },
+    {
+      "levelId": "2-3",
+      "itemCount": 19,
+      "multiplierTenths": 14,
+      "sumCostMs": 32666,
+      "parSeconds": 126
+    },
+    {
+      "levelId": "3-1",
+      "itemCount": 12,
+      "multiplierTenths": 13,
+      "sumCostMs": 21066,
+      "parSeconds": 81
+    },
+    {
+      "levelId": "3-2",
+      "itemCount": 14,
+      "multiplierTenths": 13,
+      "sumCostMs": 27333,
+      "parSeconds": 95
+    },
+    {
+      "levelId": "3-3",
+      "itemCount": 19,
+      "multiplierTenths": 13,
+      "sumCostMs": 40000,
+      "parSeconds": 127
+    },
+    {
+      "levelId": "4-1",
+      "itemCount": 9,
+      "multiplierTenths": 16,
+      "sumCostMs": 15867,
+      "parSeconds": 75
+    },
+    {
+      "levelId": "4-2",
+      "itemCount": 18,
+      "multiplierTenths": 13,
+      "sumCostMs": 27667,
+      "parSeconds": 111
+    },
+    {
+      "levelId": "4-3",
+      "itemCount": 21,
+      "multiplierTenths": 12,
+      "sumCostMs": 37600,
+      "parSeconds": 125
+    }
+  ],
+  "noReuseAlternative43": [
+    {
+      "items": [
+        "duvet_white",
+        "hoodie_white",
+        "tee_white"
+      ],
+      "bags": [
+        [
+          "sock_white",
+          "undies_white"
+        ]
+      ]
+    },
+    {
+      "items": [
+        "curtain_dark",
+        "shirt_black",
+        "tee_red",
+        "towel_navy",
+        "jeans_lightwash"
+      ],
+      "bags": [
+        [
+          "sock_black",
+          "sock_black",
+          "undies_black",
+          "undies_black",
+          "sock_worn_navy"
+        ]
+      ]
+    },
+    {
+      "items": [
+        "rag_grey",
+        "rag_blue",
+        "rag_white",
+        "jacket_white"
+      ],
+      "bags": []
+    },
+    {
+      "items": [
+        "puffer_navy",
+        "trousers_black"
+      ],
+      "bags": []
+    }
+  ],
+  "hamperShuffle": [
+    {
+      "levelId": "1-1",
+      "levelSeed": 11010,
+      "instanceIdsIn": [
+        "tee_white#1",
+        "shirt_white#1",
+        "tee_mint#1",
+        "tee_black#1",
+        "tee_grey#1",
+        "shirt_black#1"
+      ],
+      "instanceIdsOut": [
+        "tee_grey#1",
+        "tee_white#1",
+        "tee_mint#1",
+        "tee_black#1",
+        "shirt_black#1",
+        "shirt_white#1"
+      ]
+    },
+    {
+      "levelId": "4-1",
+      "levelSeed": 14010,
+      "instanceIdsIn": [
+        "tee_white#1",
+        "hoodie_white#1",
+        "sock_white#1",
+        "undies_white#1",
+        "jeans_blue#1",
+        "shirt_black#1",
+        "tee_black#1",
+        "sock_black#1",
+        "undies_black#1"
+      ],
+      "instanceIdsOut": [
+        "undies_black#1",
+        "shirt_black#1",
+        "jeans_blue#1",
+        "hoodie_white#1",
+        "sock_white#1",
+        "undies_white#1",
+        "tee_white#1",
+        "sock_black#1",
+        "tee_black#1"
+      ]
+    }
+  ],
+  "consequences": [
+    {
+      "name": "loose small items, lost or stretched by seeded dice",
+      "levelSeed": 14010,
+      "loadIndex": 0,
+      "load": {
+        "items": [
+          "tee_white#1",
+          "sock_white#1",
+          "undies_white#1"
+        ],
+        "bags": []
+      },
+      "expect": {
+        "tee_white#1": {
+          "shape": "normal",
+          "tint": "none",
+          "ruined": false,
+          "ballooned": false
+        },
+        "sock_white#1": {
+          "shape": "stretched",
+          "tint": "none",
+          "ruined": false,
+          "ballooned": false
+        },
+        "undies_white#1": {
+          "shape": "stretched",
+          "tint": "none",
+          "ruined": false,
+          "ballooned": false
+        }
+      }
+    },
+    {
+      "name": "loose small items, mix of lost and stretched (second wash of the level)",
+      "levelSeed": 14030,
+      "loadIndex": 3,
+      "load": {
+        "items": [
+          "sock_black#1",
+          "undies_black#1",
+          "sock_worn_navy#1"
+        ],
+        "bags": []
+      },
+      "expect": {
+        "sock_black#1": {
+          "shape": "lost",
+          "tint": "none",
+          "ruined": false,
+          "ballooned": false
+        },
+        "undies_black#1": {
+          "shape": "lost",
+          "tint": "none",
+          "ruined": false,
+          "ballooned": false
+        },
+        "sock_worn_navy#1": {
+          "shape": "stretched",
+          "tint": "none",
+          "ruined": false,
+          "ballooned": false
+        }
+      }
+    },
+    {
+      "name": "bleed turns lights pink, bleeder itself unchanged",
+      "levelSeed": 11020,
+      "loadIndex": 1,
+      "load": {
+        "items": [
+          "tee_red#1",
+          "tee_white#1",
+          "shirt_white#1"
+        ],
+        "bags": []
+      },
+      "expect": {
+        "tee_red#1": {
+          "shape": "normal",
+          "tint": "none",
+          "ruined": false,
+          "ballooned": false
+        },
+        "tee_white#1": {
+          "shape": "normal",
+          "tint": "pink",
+          "ruined": true,
+          "ballooned": false
+        },
+        "shirt_white#1": {
+          "shape": "normal",
+          "tint": "pink",
+          "ruined": true,
+          "ballooned": false
+        }
+      }
+    },
+    {
+      "name": "dirty load: stained beats lint on a clean dark item; flex dark gets lint",
+      "levelSeed": 13030,
+      "loadIndex": 2,
+      "load": {
+        "items": [
+          "rag_white#1",
+          "rag_grey#1",
+          "tee_black#1",
+          "jeans_blue#1"
+        ],
+        "bags": []
+      },
+      "expect": {
+        "rag_white#1": {
+          "shape": "normal",
+          "tint": "none",
+          "ruined": false,
+          "ballooned": false
+        },
+        "rag_grey#1": {
+          "shape": "normal",
+          "tint": "none",
+          "ruined": false,
+          "ballooned": false
+        },
+        "tee_black#1": {
+          "shape": "normal",
+          "tint": "stained",
+          "ruined": false,
+          "ballooned": false
+        },
+        "jeans_blue#1": {
+          "shape": "normal",
+          "tint": "lint",
+          "ruined": false,
+          "ballooned": false
+        }
+      }
+    },
+    {
+      "name": "white rag in the lights: smudged and ruined",
+      "levelSeed": 13020,
+      "loadIndex": 0,
+      "load": {
+        "items": [
+          "rag_white#1",
+          "tee_white#1",
+          "towel_white#1"
+        ],
+        "bags": []
+      },
+      "expect": {
+        "rag_white#1": {
+          "shape": "normal",
+          "tint": "none",
+          "ruined": false,
+          "ballooned": false
+        },
+        "tee_white#1": {
+          "shape": "normal",
+          "tint": "smudged",
+          "ruined": true,
+          "ballooned": false
+        },
+        "towel_white#1": {
+          "shape": "normal",
+          "tint": "smudged",
+          "ruined": true,
+          "ballooned": false
+        }
+      }
+    },
+    {
+      "name": "jam balloons everything in the drum",
+      "levelSeed": 12030,
+      "loadIndex": 0,
+      "load": {
+        "items": [
+          "puffer_navy#1",
+          "hoodie_navy#1",
+          "hoodie_navy#2",
+          "trousers_black#1"
+        ],
+        "bags": []
+      },
+      "expect": {
+        "puffer_navy#1": {
+          "shape": "normal",
+          "tint": "none",
+          "ruined": false,
+          "ballooned": true
+        },
+        "hoodie_navy#1": {
+          "shape": "normal",
+          "tint": "none",
+          "ruined": false,
+          "ballooned": true
+        },
+        "hoodie_navy#2": {
+          "shape": "normal",
+          "tint": "none",
+          "ruined": false,
+          "ballooned": true
+        },
+        "trousers_black#1": {
+          "shape": "normal",
+          "tint": "none",
+          "ruined": false,
+          "ballooned": true
+        }
+      }
+    }
+  ]
+}
