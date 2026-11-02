@@ -1,4 +1,4 @@
-// Palette (GDD 18). Item colors are placeholders until the art pass in M7.
+// Palette (GDD 18).
 export const ui = {
   teal: '#26B3AE',
   panel: '#0B4F55',
@@ -7,6 +7,13 @@ export const ui = {
   bleedPink: '#E5338F',
   dyeGreyBlue: '#7A8FA8',
   smudgeGrey: '#6E6E6E',
+  stain: '#7A5A2E',
+  dirtMark: '#6B5B45',
+  bagFill: '#E8F3F2',
+  ringLight: '#9FD9D5',
+  ringGood: '#7FE08A',
+  ringTight: '#FFC857',
+  ringOver: '#E5484D',
 } as const;
 
 export interface ItemColors { fill: string; stripe?: string; }

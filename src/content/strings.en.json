@@ -39,5 +39,17 @@
   "level.toHamper": "Put back in the hamper",
   "payoff.stars": "{n} of 3 stars",
   "payoff.time": "Your time {t}",
-  "payoff.par": "Par {t}"
+  "payoff.par": "Par {t}",
+  "levelSelect.locked": "{id}, locked",
+  "level.bag": "Laundry bag {n}, {k} of 6",
+  "level.bagContents": "Laundry bag {n}",
+  "level.bagToDrum": "Put the bag in the washer",
+  "level.bagFromDrum": "Take the bag out of the washer",
+  "level.toBag": "Put in bag {n}",
+  "level.close": "Close",
+  "settings.title": "Settings",
+  "settings.resetConfirm": "Clear all stars and unlocked levels?",
+  "settings.resetYes": "Reset",
+  "settings.resetNo": "Cancel",
+  "settings.notSaved": "This browser is not saving progress. It lasts until you close the game."
 }

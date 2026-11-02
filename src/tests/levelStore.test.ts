@@ -2,16 +2,17 @@
 // replaying the recorded events reproduces the store's own payoff.
 import { describe, expect, it } from 'vitest';
 import { content } from '../content';
-import { replay, solutionLoads, type LevelDef, type RunRecord } from '../engine';
-import { canStart, createLevelStore, itemsIn, type LevelStore } from '../ui/levelStore';
+import { replay, solutionLoads, type LevelDef, type LoadInput, type RunRecord } from '../engine';
+import { canStart, createLevelStore, itemsIn, type LevelStore, type LevelStoreDeps } from '../ui/levelStore';
+import fixturesJson from '../content/fixtures.json';
 
 const { itemsById: defs, config: cfg } = content;
 const levelById = (id: string) => content.levels.find((l) => l.id === id)!;
 
-function setup(id: string) {
+function setup(id: string | LevelDef, extra: Partial<LevelStoreDeps> = {}) {
   let now = 0;
-  const level = levelById(id);
-  const store = createLevelStore({ level, defs, cfg, clock: () => now });
+  const level = typeof id === 'string' ? levelById(id) : id;
+  const store = createLevelStore({ level, defs, cfg, clock: () => now, ...extra });
   return { level, store, advance: (ms: number) => { now += ms; } };
 }
 
@@ -24,12 +25,26 @@ function record(store: LevelStore, level: LevelDef): RunRecord {
   };
 }
 
-/** Play a list of loads: put each item in the drum (stepMs apart), press Start, finish the spin. */
-function play(store: LevelStore, advance: (ms: number) => void, loads: string[][], stepMs: number) {
-  for (const load of loads) {
-    for (const id of load) {
+/**
+ * Play a list of loads: put each item in the drum (stepMs apart), fill a free bag per bagged
+ * group and put it in the drum, press Start, finish the spin.
+ */
+function play(store: LevelStore, advance: (ms: number) => void, loads: (string[] | LoadInput)[], stepMs: number) {
+  for (const entry of loads) {
+    const load = Array.isArray(entry) ? { items: entry, bags: [] } : entry;
+    for (const id of load.items) {
       advance(stepMs);
-      store.getState().place(id, 'drum');
+      expect(store.getState().place(id, 'drum')).toBe(true);
+    }
+    const free = ([1, 2] as const).filter((b) => store.getState().bags[b] === 'slot');
+    for (const [k, contents] of load.bags.entries()) {
+      const bag = free[k]!;
+      for (const id of contents) {
+        advance(stepMs);
+        expect(store.getState().place(id, `bag:${bag}`)).toBe(true);
+      }
+      advance(stepMs);
+      store.getState().moveBag(bag, 'drum');
     }
     advance(stepMs);
     store.getState().start();
@@ -117,10 +132,10 @@ describe('level store', () => {
     expect(store.getState().events.map((e) => [e.type, e.t])).toEqual([['pause', 1000], ['resume', 1000]]);
   });
 
-  it.each(content.levels.filter((l) => l.tutorial === 1).map((l) => [l.id, l] as const))(
+  it.each(content.levels.map((l) => [l.id, l] as const))(
     '%s: a fast par run gives 3 stars and replay reproduces it exactly', (_id, level) => {
       const { store, advance } = setup(level.id);
-      play(store, advance, solutionLoads(level).map((l) => l.items), 100);
+      play(store, advance, solutionLoads(level), 100);
       const s = store.getState();
       expect(s.phase).toBe('payoff');
       expect(s.payoff).toMatchObject({ outcome: 'finished', stars: 3, completed: true });
@@ -177,5 +192,133 @@ describe('level store', () => {
     expect(store.getState().events.at(-1)).toEqual({ t: 700, type: 'abandon' });
     store.getState().start();
     expect(store.getState().events.at(-1)!.type).toBe('abandon');
+  });
+
+  it('a tutorial card holds the timer until dismissed, is recorded, and is reported as seen', () => {
+    const seen: string[] = [];
+    const { store, advance } = setup('2-1', { card: 't2_size', onCardSeen: (id) => seen.push(id) });
+    expect(store.getState().phase).toBe('card');
+    store.getState().interact();
+    store.getState().place('tee_black#1', 'drum');          // nothing moves behind the card
+    expect(store.getState().where['tee_black#1']).toBe('hamper');
+    advance(30_000);
+    store.getState().dismissCard();
+    expect(seen).toEqual(['t2_size']);
+    expect(store.getState().phase).toBe('playing');
+    advance(5000);                                          // idle after the card: not counted yet
+    store.getState().interact();
+    advance(1000);
+    expect(store.getState().timeMs()).toBe(1000);
+    expect(store.getState().events).toEqual([
+      { t: 0, type: 'card', id: 't2_size', open: true },
+      { t: 0, type: 'card', id: 't2_size', open: false },
+    ]);
+  });
+
+  it('the rulebook counts as an interaction and does not pause the timer', () => {
+    const { store, advance } = setup('1-1');
+    advance(2000);
+    store.getState().setRulebook(true);
+    advance(4000);
+    store.getState().setRulebook(false);
+    expect(store.getState().timeMs()).toBe(4000);
+    expect(store.getState().events).toEqual([
+      { t: 0, type: 'rulebook', open: true },
+      { t: 4000, type: 'rulebook', open: false },
+    ]);
+  });
+
+  it('Start is disabled with an empty drum and with only an empty bag; one bagged item enables it', () => {
+    const { store } = setup('4-1');
+    expect(canStart(store.getState())).toBe(false);
+    store.getState().moveBag(1, 'drum');
+    expect(canStart(store.getState())).toBe(false);
+    store.getState().start();
+    expect(store.getState().phase).toBe('playing');
+    store.getState().place('sock_white#1', 'bag:1');
+    expect(canStart(store.getState())).toBe(true);
+  });
+
+  it('bags take only small items, and never more than 12 bulk', () => {
+    const { store } = setup('4-3');
+    const { place } = store.getState();
+    expect(place('tee_white#1', 'bag:1')).toBe(false);
+    expect(place('rag_grey#1', 'bag:1')).toBe(false);       // rags are not small
+    const small = ['sock_white#1', 'undies_white#1', 'sock_black#1', 'sock_black#2', 'undies_black#1', 'undies_black#2'];
+    for (const id of small) expect(place(id, 'bag:1')).toBe(true);
+    expect(place('sock_worn_navy#1', 'bag:1')).toBe(false); // the seventh would be 14 bulk
+    expect(store.getState().where['sock_worn_navy#1']).toBe('hamper');
+    expect(place('sock_worn_navy#1', 'bag:2')).toBe(true);
+    // Moving an item between bags or out of one is always allowed.
+    expect(place('sock_white#1', 'floor')).toBe(true);
+    expect(store.getState().bagOrder[1]).not.toContain('sock_white#1');
+    // Refused moves are not recorded.
+    expect(store.getState().events.filter((e) => e.type === 'place')).toHaveLength(8);
+  });
+
+  it('a level without bags refuses bag moves', () => {
+    const { store } = setup('1-1');
+    store.getState().moveBag(1, 'drum');
+    expect(store.getState().bags[1]).toBe('slot');
+    expect(store.getState().events).toEqual([]);
+  });
+
+  it('reusable bags come back empty after a wash', () => {
+    const { store, advance } = setup('4-1');
+    const [lights] = solutionLoads(levelById('4-1'));
+    play(store, advance, [lights!], 100);
+    const s = store.getState();
+    expect(s.bags).toEqual({ 1: 'slot', 2: 'slot' });
+    expect(s.bagOrder).toEqual({ 1: [], 2: [] });
+    expect(s.where['sock_white#1']).toBe('washed');
+  });
+
+  it('with bagsReusable false a used bag is gone, and 4-3 is still solved by the no-reuse alternative', () => {
+    const level: LevelDef = { ...levelById('4-3'), bagsReusable: false };
+    const alt: LevelDef = { ...level, par: { ...level.par, solution: fixturesJson.noReuseAlternative43 } };
+    const { store, advance } = setup(level);
+    play(store, advance, solutionLoads(alt), 100);
+    const s = store.getState();
+    expect(s.bags).toEqual({ 1: 'used', 2: 'used' });
+    expect(s.payoff).toMatchObject({ outcome: 'finished', completed: true });
+    expect(s.payoff!.perLoad.every((e) => e.violations.length === 0)).toBe(true);
+    expect(replay(defs, level, record(store, level), cfg).stars).toBe(s.payoff!.stars);
+
+    const { store: again } = setup(level);
+    again.getState().place('sock_white#1', 'bag:1');
+    again.getState().place('tee_white#1', 'drum');
+    again.getState().moveBag(1, 'drum');
+    again.getState().start();
+    again.getState().finishWash(true);
+    expect(again.getState().place('sock_black#1', 'bag:1')).toBe(false);
+    again.getState().moveBag(1, 'drum');
+    expect(again.getState().bags[1]).toBe('used');
+  });
+
+  it('loose small items are a major mistake with a seeded look, identical on replay', () => {
+    const { level, store, advance } = setup('4-1');
+    play(store, advance, [
+      ['tee_white#1', 'hoodie_white#1', 'sock_white#1', 'undies_white#1'],
+      { items: ['jeans_blue#1', 'shirt_black#1', 'tee_black#1'], bags: [['sock_black#1', 'undies_black#1']] },
+    ], 100);
+    const p = store.getState().payoff!;
+    expect(p).toMatchObject({ outcome: 'finished', stars: 1, completed: true });
+    expect(p.perLoad[0]!.violations.map((v) => v.rule)).toEqual(['SMALL_LOOSE', 'SMALL_LOOSE']);
+    for (const id of ['sock_white#1', 'undies_white#1']) {
+      expect(['lost', 'stretched']).toContain(p.consequences[0]![id]!.shape);
+    }
+    expect(replay(defs, level, record(store, level), cfg).consequences).toEqual(p.consequences);
+  });
+
+  it('reports the end of a run and an abandon to its caller', () => {
+    const ends: number[] = [];
+    let abandons = 0;
+    const { level, store, advance } = setup('1-1', { onEnd: (p) => ends.push(p.stars), onAbandon: () => { abandons++; } });
+    play(store, advance, solutionLoads(level), 100);
+    expect(ends).toEqual([3]);
+    const other = setup('1-1', { onAbandon: () => { abandons++; } });
+    other.store.getState().abandon();
+    other.store.getState().abandon();
+    expect(abandons).toBe(1);
   });
 });
