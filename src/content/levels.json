@@ -1,0 +1,1168 @@
+{
+  "schema": 1,
+  "levels": [
+    {
+      "id": "1-1",
+      "tutorial": 1,
+      "seed": 11010,
+      "bags": 0,
+      "bagsReusable": true,
+      "flags": {
+        "showFillRing": false,
+        "smallItemLoss": false
+      },
+      "tutorialCard": "t1_sort",
+      "items": [
+        {
+          "id": "tee_white",
+          "count": 1
+        },
+        {
+          "id": "shirt_white",
+          "count": 1
+        },
+        {
+          "id": "tee_mint",
+          "count": 1
+        },
+        {
+          "id": "tee_black",
+          "count": 1
+        },
+        {
+          "id": "tee_grey",
+          "count": 1
+        },
+        {
+          "id": "shirt_black",
+          "count": 1
+        }
+      ],
+      "par": {
+        "seconds": 59,
+        "multiplier": 1.6,
+        "minLoads": 2,
+        "solution": [
+          {
+            "items": [
+              "tee_white",
+              "shirt_white",
+              "tee_mint"
+            ],
+            "bags": []
+          },
+          {
+            "items": [
+              "tee_black",
+              "tee_grey",
+              "shirt_black"
+            ],
+            "bags": []
+          }
+        ]
+      }
+    },
+    {
+      "id": "1-2",
+      "tutorial": 1,
+      "seed": 11020,
+      "bags": 0,
+      "bagsReusable": true,
+      "flags": {
+        "showFillRing": false,
+        "smallItemLoss": false
+      },
+      "tutorialCard": "t1_bleed",
+      "items": [
+        {
+          "id": "tee_white",
+          "count": 1
+        },
+        {
+          "id": "shirt_white",
+          "count": 1
+        },
+        {
+          "id": "tee_mint",
+          "count": 1
+        },
+        {
+          "id": "shirt_pastel_blue",
+          "count": 1
+        },
+        {
+          "id": "tee_black",
+          "count": 1
+        },
+        {
+          "id": "shirt_navy",
+          "count": 1
+        },
+        {
+          "id": "trousers_black",
+          "count": 1
+        },
+        {
+          "id": "tee_red",
+          "count": 1
+        }
+      ],
+      "par": {
+        "seconds": 70,
+        "multiplier": 1.6,
+        "minLoads": 2,
+        "solution": [
+          {
+            "items": [
+              "tee_white",
+              "shirt_white",
+              "tee_mint",
+              "shirt_pastel_blue"
+            ],
+            "bags": []
+          },
+          {
+            "items": [
+              "tee_black",
+              "shirt_navy",
+              "trousers_black",
+              "tee_red"
+            ],
+            "bags": []
+          }
+        ]
+      }
+    },
+    {
+      "id": "1-3",
+      "tutorial": 1,
+      "seed": 11030,
+      "bags": 0,
+      "bagsReusable": true,
+      "flags": {
+        "showFillRing": false,
+        "smallItemLoss": false
+      },
+      "tutorialCard": null,
+      "items": [
+        {
+          "id": "shirt_pastel_yellow",
+          "count": 1
+        },
+        {
+          "id": "tee_white",
+          "count": 1
+        },
+        {
+          "id": "tee_beige",
+          "count": 1
+        },
+        {
+          "id": "shirt_white",
+          "count": 1
+        },
+        {
+          "id": "tee_mint",
+          "count": 1
+        },
+        {
+          "id": "tee_grey",
+          "count": 1
+        },
+        {
+          "id": "shirt_striped",
+          "count": 1
+        },
+        {
+          "id": "tee_black",
+          "count": 1
+        },
+        {
+          "id": "tee_red",
+          "count": 1
+        },
+        {
+          "id": "trousers_black",
+          "count": 1
+        },
+        {
+          "id": "shirt_navy",
+          "count": 1
+        }
+      ],
+      "par": {
+        "seconds": 85,
+        "multiplier": 1.6,
+        "minLoads": 2,
+        "solution": [
+          {
+            "items": [
+              "shirt_pastel_yellow",
+              "tee_white",
+              "tee_beige",
+              "shirt_white",
+              "tee_mint"
+            ],
+            "bags": []
+          },
+          {
+            "items": [
+              "tee_grey",
+              "shirt_striped",
+              "tee_black",
+              "tee_red",
+              "trousers_black",
+              "shirt_navy"
+            ],
+            "bags": []
+          }
+        ]
+      }
+    },
+    {
+      "id": "2-1",
+      "tutorial": 2,
+      "seed": 12010,
+      "bags": 0,
+      "bagsReusable": true,
+      "flags": {
+        "showFillRing": true,
+        "smallItemLoss": false
+      },
+      "tutorialCard": "t2_size",
+      "items": [
+        {
+          "id": "jeans_blue",
+          "count": 3
+        },
+        {
+          "id": "hoodie_navy",
+          "count": 3
+        },
+        {
+          "id": "trousers_black",
+          "count": 3
+        },
+        {
+          "id": "shirt_black",
+          "count": 3
+        },
+        {
+          "id": "tee_black",
+          "count": 2
+        },
+        {
+          "id": "tee_grey",
+          "count": 2
+        }
+      ],
+      "par": {
+        "seconds": 104,
+        "multiplier": 1.4,
+        "minLoads": 2,
+        "solution": [
+          {
+            "items": [
+              "jeans_blue",
+              "jeans_blue",
+              "hoodie_navy",
+              "hoodie_navy",
+              "trousers_black",
+              "shirt_black",
+              "shirt_black",
+              "tee_black"
+            ],
+            "bags": []
+          },
+          {
+            "items": [
+              "jeans_blue",
+              "hoodie_navy",
+              "trousers_black",
+              "trousers_black",
+              "shirt_black",
+              "tee_black",
+              "tee_grey",
+              "tee_grey"
+            ],
+            "bags": []
+          }
+        ]
+      }
+    },
+    {
+      "id": "2-2",
+      "tutorial": 2,
+      "seed": 12020,
+      "bags": 0,
+      "bagsReusable": true,
+      "flags": {
+        "showFillRing": true,
+        "smallItemLoss": false
+      },
+      "tutorialCard": null,
+      "items": [
+        {
+          "id": "hoodie_white",
+          "count": 1
+        },
+        {
+          "id": "tee_white",
+          "count": 2
+        },
+        {
+          "id": "shirt_pastel_blue",
+          "count": 1
+        },
+        {
+          "id": "tee_beige",
+          "count": 1
+        },
+        {
+          "id": "jeans_blue",
+          "count": 4
+        },
+        {
+          "id": "hoodie_navy",
+          "count": 4
+        },
+        {
+          "id": "trousers_black",
+          "count": 2
+        },
+        {
+          "id": "tee_red",
+          "count": 1
+        },
+        {
+          "id": "shirt_black",
+          "count": 1
+        }
+      ],
+      "par": {
+        "seconds": 116,
+        "multiplier": 1.4,
+        "minLoads": 3,
+        "solution": [
+          {
+            "items": [
+              "hoodie_white",
+              "tee_white",
+              "tee_white",
+              "shirt_pastel_blue",
+              "tee_beige"
+            ],
+            "bags": []
+          },
+          {
+            "items": [
+              "jeans_blue",
+              "jeans_blue",
+              "hoodie_navy",
+              "hoodie_navy",
+              "trousers_black",
+              "tee_red"
+            ],
+            "bags": []
+          },
+          {
+            "items": [
+              "jeans_blue",
+              "jeans_blue",
+              "hoodie_navy",
+              "hoodie_navy",
+              "trousers_black",
+              "shirt_black"
+            ],
+            "bags": []
+          }
+        ]
+      }
+    },
+    {
+      "id": "2-3",
+      "tutorial": 2,
+      "seed": 12030,
+      "bags": 0,
+      "bagsReusable": true,
+      "flags": {
+        "showFillRing": true,
+        "smallItemLoss": false
+      },
+      "tutorialCard": null,
+      "items": [
+        {
+          "id": "hoodie_white",
+          "count": 3
+        },
+        {
+          "id": "tee_white",
+          "count": 2
+        },
+        {
+          "id": "shirt_white",
+          "count": 1
+        },
+        {
+          "id": "shirt_pastel_yellow",
+          "count": 1
+        },
+        {
+          "id": "tee_beige",
+          "count": 1
+        },
+        {
+          "id": "tee_mint",
+          "count": 1
+        },
+        {
+          "id": "hoodie_navy",
+          "count": 2
+        },
+        {
+          "id": "jeans_blue",
+          "count": 3
+        },
+        {
+          "id": "trousers_black",
+          "count": 1
+        },
+        {
+          "id": "puffer_navy",
+          "count": 1
+        },
+        {
+          "id": "tee_red",
+          "count": 1
+        },
+        {
+          "id": "tee_grey",
+          "count": 1
+        },
+        {
+          "id": "shirt_black",
+          "count": 1
+        }
+      ],
+      "par": {
+        "seconds": 126,
+        "multiplier": 1.4,
+        "minLoads": 3,
+        "solution": [
+          {
+            "items": [
+              "hoodie_white",
+              "hoodie_white",
+              "hoodie_white",
+              "tee_white",
+              "tee_white",
+              "shirt_white",
+              "shirt_pastel_yellow",
+              "tee_beige",
+              "tee_mint"
+            ],
+            "bags": []
+          },
+          {
+            "items": [
+              "hoodie_navy",
+              "hoodie_navy",
+              "jeans_blue",
+              "jeans_blue",
+              "jeans_blue",
+              "trousers_black"
+            ],
+            "bags": []
+          },
+          {
+            "items": [
+              "puffer_navy",
+              "tee_red",
+              "tee_grey",
+              "shirt_black"
+            ],
+            "bags": []
+          }
+        ]
+      }
+    },
+    {
+      "id": "3-1",
+      "tutorial": 3,
+      "seed": 13010,
+      "bags": 0,
+      "bagsReusable": true,
+      "flags": {
+        "showFillRing": true,
+        "smallItemLoss": false
+      },
+      "tutorialCard": "t3_household",
+      "items": [
+        {
+          "id": "duvet_white",
+          "count": 1
+        },
+        {
+          "id": "towel_white",
+          "count": 1
+        },
+        {
+          "id": "tee_white",
+          "count": 1
+        },
+        {
+          "id": "shirt_white",
+          "count": 1
+        },
+        {
+          "id": "tee_mint",
+          "count": 1
+        },
+        {
+          "id": "curtain_dark",
+          "count": 1
+        },
+        {
+          "id": "towel_navy",
+          "count": 2
+        },
+        {
+          "id": "hoodie_navy",
+          "count": 1
+        },
+        {
+          "id": "tee_black",
+          "count": 2
+        },
+        {
+          "id": "shirt_black",
+          "count": 1
+        }
+      ],
+      "par": {
+        "seconds": 81,
+        "multiplier": 1.3,
+        "minLoads": 2,
+        "solution": [
+          {
+            "items": [
+              "duvet_white",
+              "towel_white",
+              "tee_white",
+              "shirt_white",
+              "tee_mint"
+            ],
+            "bags": []
+          },
+          {
+            "items": [
+              "curtain_dark",
+              "towel_navy",
+              "towel_navy",
+              "hoodie_navy",
+              "tee_black",
+              "tee_black",
+              "shirt_black"
+            ],
+            "bags": []
+          }
+        ]
+      }
+    },
+    {
+      "id": "3-2",
+      "tutorial": 3,
+      "seed": 13020,
+      "bags": 0,
+      "bagsReusable": true,
+      "flags": {
+        "showFillRing": true,
+        "smallItemLoss": false
+      },
+      "tutorialCard": "t3_rags",
+      "items": [
+        {
+          "id": "duvet_white",
+          "count": 1
+        },
+        {
+          "id": "towel_white",
+          "count": 1
+        },
+        {
+          "id": "towel_pastel",
+          "count": 1
+        },
+        {
+          "id": "tee_white",
+          "count": 1
+        },
+        {
+          "id": "shirt_pastel_blue",
+          "count": 1
+        },
+        {
+          "id": "sheet_dark",
+          "count": 1
+        },
+        {
+          "id": "towel_navy",
+          "count": 1
+        },
+        {
+          "id": "shirt_black",
+          "count": 1
+        },
+        {
+          "id": "tee_black",
+          "count": 1
+        },
+        {
+          "id": "jeans_blue",
+          "count": 1
+        },
+        {
+          "id": "trousers_black",
+          "count": 1
+        },
+        {
+          "id": "rag_grey",
+          "count": 1
+        },
+        {
+          "id": "rag_blue",
+          "count": 1
+        },
+        {
+          "id": "rag_white",
+          "count": 1
+        }
+      ],
+      "par": {
+        "seconds": 95,
+        "multiplier": 1.3,
+        "minLoads": 3,
+        "solution": [
+          {
+            "items": [
+              "duvet_white",
+              "towel_white",
+              "towel_pastel",
+              "tee_white",
+              "shirt_pastel_blue"
+            ],
+            "bags": []
+          },
+          {
+            "items": [
+              "sheet_dark",
+              "towel_navy",
+              "shirt_black",
+              "tee_black",
+              "jeans_blue",
+              "trousers_black"
+            ],
+            "bags": []
+          },
+          {
+            "items": [
+              "rag_grey",
+              "rag_blue",
+              "rag_white"
+            ],
+            "bags": []
+          }
+        ]
+      }
+    },
+    {
+      "id": "3-3",
+      "tutorial": 3,
+      "seed": 13030,
+      "bags": 0,
+      "bagsReusable": true,
+      "flags": {
+        "showFillRing": true,
+        "smallItemLoss": false
+      },
+      "tutorialCard": null,
+      "items": [
+        {
+          "id": "sheet_white",
+          "count": 1
+        },
+        {
+          "id": "towel_white",
+          "count": 1
+        },
+        {
+          "id": "towel_pastel",
+          "count": 1
+        },
+        {
+          "id": "tee_white",
+          "count": 1
+        },
+        {
+          "id": "shirt_white",
+          "count": 1
+        },
+        {
+          "id": "hoodie_white",
+          "count": 1
+        },
+        {
+          "id": "curtain_dark",
+          "count": 1
+        },
+        {
+          "id": "towel_navy",
+          "count": 1
+        },
+        {
+          "id": "towel_red",
+          "count": 1
+        },
+        {
+          "id": "shirt_black",
+          "count": 1
+        },
+        {
+          "id": "tee_black",
+          "count": 1
+        },
+        {
+          "id": "jeans_lightwash",
+          "count": 1
+        },
+        {
+          "id": "trousers_black",
+          "count": 1
+        },
+        {
+          "id": "rag_grey",
+          "count": 1
+        },
+        {
+          "id": "rag_blue",
+          "count": 1
+        },
+        {
+          "id": "rag_white",
+          "count": 1
+        },
+        {
+          "id": "jacket_white",
+          "count": 1
+        },
+        {
+          "id": "puffer_navy",
+          "count": 1
+        },
+        {
+          "id": "jacket_navy",
+          "count": 1
+        }
+      ],
+      "par": {
+        "seconds": 127,
+        "multiplier": 1.3,
+        "minLoads": 4,
+        "solution": [
+          {
+            "items": [
+              "sheet_white",
+              "towel_white",
+              "towel_pastel",
+              "tee_white",
+              "shirt_white",
+              "hoodie_white"
+            ],
+            "bags": []
+          },
+          {
+            "items": [
+              "curtain_dark",
+              "towel_navy",
+              "towel_red",
+              "shirt_black",
+              "tee_black",
+              "jeans_lightwash",
+              "trousers_black"
+            ],
+            "bags": []
+          },
+          {
+            "items": [
+              "rag_grey",
+              "rag_blue",
+              "rag_white",
+              "jacket_white"
+            ],
+            "bags": []
+          },
+          {
+            "items": [
+              "puffer_navy",
+              "jacket_navy"
+            ],
+            "bags": []
+          }
+        ]
+      }
+    },
+    {
+      "id": "4-1",
+      "tutorial": 4,
+      "seed": 14010,
+      "bags": 2,
+      "bagsReusable": true,
+      "flags": {
+        "showFillRing": true,
+        "smallItemLoss": true
+      },
+      "tutorialCard": "t4_bags",
+      "items": [
+        {
+          "id": "tee_white",
+          "count": 1
+        },
+        {
+          "id": "hoodie_white",
+          "count": 1
+        },
+        {
+          "id": "sock_white",
+          "count": 1
+        },
+        {
+          "id": "undies_white",
+          "count": 1
+        },
+        {
+          "id": "jeans_blue",
+          "count": 1
+        },
+        {
+          "id": "shirt_black",
+          "count": 1
+        },
+        {
+          "id": "tee_black",
+          "count": 1
+        },
+        {
+          "id": "sock_black",
+          "count": 1
+        },
+        {
+          "id": "undies_black",
+          "count": 1
+        }
+      ],
+      "par": {
+        "seconds": 75,
+        "multiplier": 1.6,
+        "minLoads": 2,
+        "solution": [
+          {
+            "items": [
+              "tee_white",
+              "hoodie_white"
+            ],
+            "bags": [
+              [
+                "sock_white",
+                "undies_white"
+              ]
+            ]
+          },
+          {
+            "items": [
+              "jeans_blue",
+              "shirt_black",
+              "tee_black"
+            ],
+            "bags": [
+              [
+                "sock_black",
+                "undies_black"
+              ]
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "4-2",
+      "tutorial": 4,
+      "seed": 14020,
+      "bags": 2,
+      "bagsReusable": true,
+      "flags": {
+        "showFillRing": true,
+        "smallItemLoss": true
+      },
+      "tutorialCard": null,
+      "items": [
+        {
+          "id": "tee_white",
+          "count": 1
+        },
+        {
+          "id": "hoodie_white",
+          "count": 1
+        },
+        {
+          "id": "sheet_white",
+          "count": 1
+        },
+        {
+          "id": "undies_white",
+          "count": 2
+        },
+        {
+          "id": "sock_white",
+          "count": 1
+        },
+        {
+          "id": "hoodie_navy",
+          "count": 1
+        },
+        {
+          "id": "jeans_blue",
+          "count": 1
+        },
+        {
+          "id": "shirt_black",
+          "count": 1
+        },
+        {
+          "id": "undies_black",
+          "count": 2
+        },
+        {
+          "id": "sock_black",
+          "count": 1
+        },
+        {
+          "id": "sock_worn_navy",
+          "count": 1
+        },
+        {
+          "id": "rag_grey",
+          "count": 1
+        },
+        {
+          "id": "rag_blue",
+          "count": 1
+        },
+        {
+          "id": "jacket_white",
+          "count": 1
+        },
+        {
+          "id": "jeans_lightwash",
+          "count": 1
+        },
+        {
+          "id": "trousers_black",
+          "count": 1
+        }
+      ],
+      "par": {
+        "seconds": 111,
+        "multiplier": 1.3,
+        "minLoads": 3,
+        "solution": [
+          {
+            "items": [
+              "tee_white",
+              "hoodie_white",
+              "sheet_white"
+            ],
+            "bags": [
+              [
+                "undies_white",
+                "undies_white",
+                "sock_white"
+              ]
+            ]
+          },
+          {
+            "items": [
+              "hoodie_navy",
+              "jeans_blue",
+              "shirt_black"
+            ],
+            "bags": [
+              [
+                "undies_black",
+                "undies_black",
+                "sock_black",
+                "sock_worn_navy"
+              ]
+            ]
+          },
+          {
+            "items": [
+              "rag_grey",
+              "rag_blue",
+              "jacket_white",
+              "jeans_lightwash",
+              "trousers_black"
+            ],
+            "bags": []
+          }
+        ]
+      }
+    },
+    {
+      "id": "4-3",
+      "tutorial": 4,
+      "seed": 14030,
+      "bags": 2,
+      "bagsReusable": true,
+      "flags": {
+        "showFillRing": true,
+        "smallItemLoss": true
+      },
+      "tutorialCard": null,
+      "items": [
+        {
+          "id": "duvet_white",
+          "count": 1
+        },
+        {
+          "id": "hoodie_white",
+          "count": 1
+        },
+        {
+          "id": "tee_white",
+          "count": 1
+        },
+        {
+          "id": "sock_white",
+          "count": 1
+        },
+        {
+          "id": "undies_white",
+          "count": 1
+        },
+        {
+          "id": "curtain_dark",
+          "count": 1
+        },
+        {
+          "id": "shirt_black",
+          "count": 1
+        },
+        {
+          "id": "tee_red",
+          "count": 1
+        },
+        {
+          "id": "towel_navy",
+          "count": 1
+        },
+        {
+          "id": "jeans_lightwash",
+          "count": 1
+        },
+        {
+          "id": "sock_black",
+          "count": 2
+        },
+        {
+          "id": "undies_black",
+          "count": 2
+        },
+        {
+          "id": "rag_grey",
+          "count": 1
+        },
+        {
+          "id": "rag_blue",
+          "count": 1
+        },
+        {
+          "id": "rag_white",
+          "count": 1
+        },
+        {
+          "id": "jacket_white",
+          "count": 1
+        },
+        {
+          "id": "puffer_navy",
+          "count": 1
+        },
+        {
+          "id": "trousers_black",
+          "count": 1
+        },
+        {
+          "id": "sock_worn_navy",
+          "count": 1
+        }
+      ],
+      "par": {
+        "seconds": 125,
+        "multiplier": 1.2,
+        "minLoads": 4,
+        "solution": [
+          {
+            "items": [
+              "duvet_white",
+              "hoodie_white",
+              "tee_white"
+            ],
+            "bags": [
+              [
+                "sock_white",
+                "undies_white"
+              ]
+            ]
+          },
+          {
+            "items": [
+              "curtain_dark",
+              "shirt_black",
+              "tee_red",
+              "towel_navy",
+              "jeans_lightwash"
+            ],
+            "bags": [
+              [
+                "sock_black",
+                "sock_black",
+                "undies_black",
+                "undies_black"
+              ]
+            ]
+          },
+          {
+            "items": [
+              "rag_grey",
+              "rag_blue",
+              "rag_white",
+              "jacket_white"
+            ],
+            "bags": []
+          },
+          {
+            "items": [
+              "puffer_navy",
+              "trousers_black"
+            ],
+            "bags": [
+              [
+                "sock_worn_navy"
+              ]
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,905 @@
+# Fresh Laundry: Game Design Document
+
+**Version:** 0.2 (cross-checked; vertical slice, Tutorials 1-4, 12 levels)
+**Platform:** Offline-first PWA, phone portrait first
+**Audience:** People who just started living alone, and teenagers starting to do their own laundry
+**Purpose:** a spec to hand to Claude Code. Everything that can be data (items, levels, rules, par times) is data, and the numbers in this document were produced and verified by a reference script (`verify_gdd.py`, bundled).
+
+---
+
+## 0. How to use this document with Claude Code
+
+### 0.1 Bundle contents
+
+| File | Role |
+|---|---|---|
+| `GDD.md` | This spec. Read it first. |
+| `src/content/items.json` | Canonical item catalog (36 items). |
+| `src/content/levels.json` | Canonical levels: contents, par solution, par seconds, flags. |
+| `tools/verify_gdd.py` | **Reference model.** Python rules engine + minimum-load solver + trap tests. Its output is the source of truth for rule behavior and par values. Port its logic to the TypeScript engine; do not "fix" the numbers by hand. |
+
+### 0.2 Working rules for Claude Code
+
+1. Build in the order of **Section 19 (Milestones)**. Each milestone has acceptance criteria; do not start the next until they pass.
+2. The **rules engine is a pure TypeScript module** (no DOM, React, timers, or `Math.random`). It must be deterministic and replayable (Sections 13 and 15).
+3. All content is data. Adding or tuning a level must never require engine changes.
+4. Where this document says **[OPEN]**, use the stated default, leave a `// TODO(GDD-OPEN)` comment, and keep the value in `config.json`.
+5. **Parity requirement:** the TypeScript engine must reproduce `verify_gdd.py` on every level and every trap case (Section 20). When they disagree, the Python script wins and the TS engine is the bug.
+6. No visible text during levels except tutorial cards, the rulebook, and numbers (timer, cost). Everything else is shape, color, and icon.
+
+### 0.3 What changed from v0.1 (summary)
+
+Full list in **Appendix A**. Headlines: lint rule added (your ruling); levels 3-2, 3-3, 4-2, 4-3 redesigned because the white rag can no longer share a load with dark items; all par times and load totals recomputed by script (v0.1 had wrong wet-bulk values in 2-1 and 2-2 and a rounding error in 2-3); jam logic corrected (dry bulk over 100 always jams); tutorial cards moved to the level where each idea first appears; many missing implementation details added (state machine, layout, save format, idempotent upload, SQL, CI, manifest, accessibility).
+
+---
+
+## 1. Vision
+
+A calm, bright, systemic puzzle game that teaches real laundry sense. The player has **one hamper and one top-load washing machine**. Every level is one laundry day: sort the pile, decide what goes in each load and in what order, press Start, and see the consequences at the end on a clothesline.
+
+Design pillars:
+
+- **Rule application, Papers, Please style.** The player carries a rulebook; each tutorial adds a page. Rules are small and combine in later levels.
+- **Common sense over memorization.** Some things are deliberately discovered, not taught: jeans and jackets are flexible, the puffer jacket swells when wet, worn socks can join the dirty load, a white rag sheds lint on dark things.
+- **Consequences are visual, never textual.** No "why" text after mistakes. Show the pink shirt, the lone sock, the jammed drum.
+- **Forgiving but meaningful.** Any non-fatal finish unlocks the next level. Stars reward accuracy first, then speed.
+- **Fast.** No forced waiting. The wash animation is short and skippable; a time penalty stands in for the cycle.
+
+---
+
+## 2. Scope of this build
+
+| In scope | Out of scope (later) |
+|---|---|
+| 12 levels: 1-1 to 4-3 | Tutorial 5 (dryer), Tutorial 6 (care labels), detergent round |
+| Hamper, floor, washer, 2 mesh bags | Interactive clothesline (payoff scene only) |
+| Rules engine, stars, timer, replay recording | Weather, sound beyond optional SFX |
+| Rulebook, tutorial cards, level select | Accounts, leaderboards |
+| Offline PWA, progress save, anonymous run upload | Multiple languages |
+
+---
+
+## 3. Platform and technical decisions
+
+### 3.1 Stack (decided)
+
+- **TypeScript + Vite + React**, rendering **SVG** for items and machine. Modals, rulebook, and level select are plain React/DOM.
+- **Pointer Events** for drag and tap (not the HTML5 drag-and-drop API, which is unreliable on touch). Draggable elements use `touch-action: none`.
+- **State:** Zustand (or a reducer). The engine is separate and imported by the store.
+- **PWA:** `vite-plugin-pwa` (Workbox), precache everything, `registerType: 'autoUpdate'`.
+- **Routing:** hash routing (GitHub Pages sub-path). Vite `base` comes from env `VITE_BASE` (default `/`).
+- **Tests:** Vitest (engine, content validation, replay, timer).
+- **Hosting:** GitHub Pages (static). Analytics endpoint on Supabase (Section 16).
+- Not chosen: Phaser/Pixi (UI-heavy puzzle, modals and accessibility are awkward in canvas), Godot (bundle size, weak PWA/offline story).
+
+### 3.2 Layout and device rules
+
+- **Design viewport:** 360 x 640 logical px (9:16). The game container scales uniformly to fit.
+- **Portrait only.** Manifest `orientation: portrait`. iOS ignores it, so on touch devices show a full-screen "please rotate" overlay when `(orientation: landscape) and (pointer: coarse)`.
+- **Desktop:** the 9:16 container is centered on a **black page**; the sides are blacked out. Container height = `min(100dvh, 100vw * 16/9)`.
+- **Prevent browser gestures:** `overscroll-behavior: none`, disable pinch zoom and text selection in the game area, `viewport-fit=cover`, respect safe-area insets.
+- **Language:** English only. All strings in `src/content/strings.en.json`.
+
+### 3.3 Repo structure
+
+```
+/src
+  /engine      pure TS: types, evaluate, score, rng, replay, config
+  /content     items.json, levels.json, config.json, rulebook.json, cards.json, strings.en.json
+  /ui          React: App, Boot, LevelSelect, Level, Washer, Hamper, Floor, Bag, Rulebook, CardModal, Payoff, Settings
+  /art         SVG item components, palette.ts
+  /services    storage.ts (localStorage), outbox.ts (IndexedDB), upload.ts (Supabase), timer.ts
+  /tests       engine.test.ts, content.test.ts, replay.test.ts, timer.test.ts
+/tools         verify_gdd.py
+/public        icons, favicon
+/.github/workflows/deploy.yml
+GDD.md
+```
+
+---
+
+## 4. Core loop and level state machine
+
+1. Level loads. If the level has a `tutorialCard` that the player has never seen, show it (timer paused).
+2. The pile is in the **hamper** (order shuffled with the level seed). The player moves items between hamper, floor, drum, and bags.
+3. The player presses **Start**. The timer jumps forward by the cycle cost; a 1.5 s skippable spin plays. **Nothing is revealed.**
+4. The washed items and their bags' contents leave the play area. The player continues with what remains.
+5. When no items remain in hamper, floor, bags, or drum, the **payoff scene** plays: every load is revealed at once, then the clothesline, then stars.
+6. **Exception:** if a load jams (Section 7.4) the level ends immediately with a jam payoff and 0 stars. Fatal color/hygiene mistakes do **not** end the level early; they are revealed at the end.
+
+State machine (UI store):
+
+```
+CARD -> PLAYING <-> WASHING(animation, skippable) -> PLAYING ... -> PAYOFF
+                          \-> JAM -> PAYOFF
+PLAYING -> ABANDON (leave level) : run recorded as outcome "abandon", no stars, nothing unlocked
+```
+
+- A level cannot end with unwashed items. **Start** is disabled when the drum is empty.
+- Leaving mid-level discards progress (no mid-level save/resume). **Retry** restarts with the same seed and a reset timer.
+
+---
+
+## 5. Items
+
+### 5.1 Units
+
+- **Weight unit:** 1 unit = 50 g. Drum weight limit **90** (4.5 kg, standard Japanese household washer).
+- **Dry bulk:** drum space an item takes when dry. Drum bulk limit **100**.
+- **Wet bulk = dry bulk x swell multiplier.**
+
+| Swell | Multiplier | Typical items |
+|---|---|---|
+| low | x1.0 | socks, underwear, tees, shirts, rags, jeans, jackets |
+| medium | x1.2 | towels, hoodies, curtains, sheet sets |
+| high | x2.0 | puffer jacket, duvet cover |
+
+### 5.2 Item properties
+
+| Field | Values | Meaning |
+|---|---|---|
+| `tier` | `light` / `dark` | Light = white, pastel, beige. Dark = everything else, including grey. |
+| `bleeds` | bool | Bright dye that runs (red). Only matters with lights. |
+| `hygiene` | `clean` / `flex` / `dirty` | **clean**: never in a dirty load. **flex**: fine in a clean load (by color) or a dirty load. **dirty**: only in a dirty load. |
+| `small` | bool | Can be bagged; if loose in a wash it is lost or stretched. |
+| `shedder` | bool | Sheds white lint (fluffy white towel, white rag). |
+| `weight`, `bulk`, `swell` | numbers | See 5.1. |
+
+Rags and the white jacket are `dirty`. Their `tier` still exists for display but **color rules never apply to dirty items** (a dirty item is never a dye victim).
+
+### 5.3 Catalog (canonical data is `items.json`)
+
+W = weight, B = dry bulk. A sock or underwear "item" is one draggable unit (a pair of socks counts as one item, W2 B2).
+
+| id | Item | W | B | Swell | Tier | Bleeds | Hygiene | Flags |
+|---|---|---|---|---|---|---|---|---|
+| tee_white | White T-shirt | 4 | 5 | low | light | | clean | |
+| tee_mint | Pastel mint T-shirt | 4 | 5 | low | light | | clean | |
+| tee_beige | Beige T-shirt | 4 | 5 | low | light | | clean | |
+| tee_black | Black T-shirt | 4 | 5 | low | dark | | clean | |
+| tee_grey | Grey T-shirt | 4 | 5 | low | dark | | clean | grey is dark |
+| tee_red | Bright red T-shirt | 4 | 5 | low | dark | yes | clean | |
+| shirt_white | White shirt | 5 | 6 | low | light | | clean | |
+| shirt_pastel_yellow | Pastel yellow shirt | 5 | 6 | low | light | | clean | looks bold, is light |
+| shirt_pastel_blue | Pastel blue shirt | 5 | 6 | low | light | | clean | |
+| shirt_black | Black shirt | 5 | 6 | low | dark | | clean | |
+| shirt_navy | Navy shirt | 5 | 6 | low | dark | | clean | |
+| shirt_striped | Navy-white striped shirt | 5 | 6 | low | dark | | clean | stripes are a trap |
+| trousers_black | Black trousers | 8 | 10 | low | dark | | **flex** | |
+| hoodie_white | White hoodie | 12 | 16 | medium | light | | clean | looks small |
+| hoodie_navy | Navy hoodie | 12 | 16 | medium | dark | | clean | |
+| jeans_blue | Blue jeans | 14 | 14 | low | dark | | **flex** | |
+| jeans_lightwash | Light-wash jeans | 14 | 14 | low | dark | | **flex** | looks light, is dark |
+| jacket_white | White light jacket | 10 | 18 | low | light | | **dirty** | outer layer, always dirty |
+| jacket_navy | Navy jacket | 10 | 18 | low | dark | | **flex** | |
+| puffer_navy | Navy puffer jacket | 12 | 40 | **high** | dark | | **flex** | light, huge, swells wet |
+| towel_white | Fluffy white towel | 10 | 12 | medium | light | | clean | shedder |
+| towel_pastel | Pastel towel | 10 | 12 | medium | light | | clean | |
+| towel_navy | Navy towel | 10 | 12 | medium | dark | | clean | |
+| towel_red | Bright red towel | 10 | 12 | medium | dark | yes | clean | |
+| curtain_dark | Dark curtain | 18 | 24 | medium | dark | | clean | |
+| duvet_white | White duvet cover | 18 | 28 | **high** | light | | clean | |
+| sheet_white | White sheet set | 20 | 24 | medium | light | | clean | |
+| sheet_dark | Dark sheet set | 20 | 24 | medium | dark | | clean | |
+| rag_grey | Grey rag | 2 | 2 | low | dark | | **dirty** | |
+| rag_blue | Blue rag | 2 | 2 | low | dark | | **dirty** | |
+| rag_white | White rag | 2 | 2 | low | light | | **dirty** | shedder; looks like a light item |
+| sock_white | White socks (pair) | 2 | 2 | low | light | | clean | small |
+| sock_black | Black socks (pair) | 2 | 2 | low | dark | | clean | small |
+| sock_worn_navy | Worn gym socks (pair) | 2 | 2 | low | dark | | **flex** | small; smell lines |
+| undies_white | White underwear | 2 | 2 | low | light | | clean | small |
+| undies_black | Black underwear | 2 | 2 | low | dark | | clean | small |
+
+**Laundry bag** (a container, not an item): W2, B2, swell low, capacity **12 bulk** (so up to 6 small items). Only `small` items can go in a bag. Rags are not small.
+
+### 5.4 Visual cues without text
+
+- **Light vs dark:** dark items get a thicker outline and darker fill; light items a thin outline and bright fill (colorblind-safe secondary cue).
+- **Dirty items** (rags, white jacket, worn socks): stain marks or a frayed edge. Worn socks also get small wavy smell lines.
+- **Swell is never shown** on items or the ring (the player must learn it). The puffer and duvet simply look big or puffy.
+- **No labels and no inspector** in this build.
+
+---
+
+## 6. Containers and interaction
+
+### 6.1 Screen layout (design viewport 360 x 640)
+
+1. **Top bar (48 px):** rulebook button (left), **timer** (small number, **top middle**, `m:ss`), menu button (right).
+2. **Washing machine (about 40% height):** open lid, visible drum showing placed items as compact chips, a **fill ring** around the drum (from Tutorial 2), the **Start** button with the live cost (for example "+11s"), and two **bag slots** beside the drum (Tutorial 4 only).
+3. **Floor (about 28% height):** free space. Items can be dropped anywhere on it and stay where dropped. Unlimited capacity. Items may overlap; the topmost is the last touched.
+4. **Hamper (about 24% height):** the starting pile as a wrapped grid. If the pile overflows, the hamper scrolls vertically.
+
+### 6.2 Sprites and touch targets
+
+| Class | Dry bulk | Sprite size |
+|---|---|---|
+| S | up to 6 | 44 px |
+| M | 7 to 20 | 56 px |
+| L | over 20 (curtain, duvet, sheet, puffer) | 72 px |
+
+All hit areas are at least 44 x 44 px. In the drum, items are shown as 28 px chips; tapping a chip selects it.
+
+### 6.3 Interactions
+
+- **Drag and drop** items between hamper, floor, and drum. Dropping on a container assigns the item there.
+- **Tap-to-assign** also works for every container: tap an item (it highlights), then tap the destination (drum, hamper, floor, or a bag). Tap the item again to deselect. Tap-to-assign has the **same star ceiling** as dragging. Items are rendered as `<button>`s with accessible names so keyboard and screen readers also work.
+- **Bags are tap-to-assign:** select a small item, then tap a bag to put it in. Tapping a bag with nothing selected opens a **bag popover** showing its contents (tap a content to send it to the floor) and a **Put in washer** button. A bag can also be dragged into the drum.
+- Items can be removed from the drum freely before Start.
+- **Start** adds the cycle cost to the timer (Section 9) and runs the 1.5 s animation (tap to skip).
+
+### 6.4 Bags
+
+- The player has **2 bags per level** (levels from 4-1; none before). Config `bagsReusable` default **true** [OPEN]: after a load, its bags return empty to their slots. If false, 2 bags total for the level; all levels remain solvable (verified, see 12.7).
+- A bag in the drum adds W2 B2 plus its contents. A load may contain up to 2 bags. Bag contents follow the same color and hygiene rules as loose items (mesh does not stop dye or lint).
+- Bag location state: `slot` (on the floor beside the machine) or `drum`. An item lives in exactly one of: `hamper`, `floor`, `drum`, `bag:1`, `bag:2`.
+
+### 6.5 The fill ring (dry values only)
+
+`fill = max(weight / 90, dryBulk / 100)`.
+
+| Fill | Ring zone | Meaning |
+|---|---|---|
+| under 70% | light | not an error. Costs only the extra cycle time. |
+| 70% to 90% | good | the "right load" |
+| 90% to 100% | tight | allowed; jams only if swelling pushes wet bulk over 100 |
+| over 100% | overfull | lid visibly bulges. **A jam is certain** (see 7.4) |
+
+The ring shows **dry** values only. Wet bulk is never shown during play; it appears only in the jam payoff. Zone names are neutral on purpose: many optimal loads in Tutorials 3 and 4 cannot reach 70% because color and hygiene rules force small loads, so "wasteful" would be misleading.
+
+---
+
+## 7. Rules
+
+### 7.1 Definitions
+
+- A **load** is everything in the drum at Start, including bags and their contents.
+- A load is a **dirty load** if it contains any item with `hygiene = dirty`. Otherwise it is a **clean load**.
+
+### 7.2 Clean loads: color rules
+
+| Rule | Condition | Severity |
+|---|---|---|
+| `COLOR_BLEED` | a `bleeds` item shares a clean load with any `light` item | **fatal** |
+| `COLOR_DYE` | any `dark` item shares a clean load with any `light` item (and `COLOR_BLEED` did not already apply) | **fatal** |
+
+Light with light and dark with dark are always fine. A fluffy white towel with dark clothes is a `COLOR_DYE` (the light item gets dyed). Report once per load.
+
+### 7.3 Dirty loads: hygiene and lint rules
+
+Color rules (`COLOR_BLEED`, `COLOR_DYE`) are **off** in a dirty load. Instead:
+
+| Rule | Condition | Severity |
+|---|---|---|
+| `HYG_DIRTY_WITH_LIGHT` | a `clean`-hygiene, `light` item is in a dirty load | **fatal** (grey smudges), per item |
+| `HYG_DIRTY_WITH_DARK` | a `clean`-hygiene, `dark` item is in a dirty load | **major**, per item |
+| `COLOR_LINT` | a `shedder` + `dirty` item (the white rag) shares the load with any `dark` item that is not itself `dirty` | **minor**, per victim item |
+
+Notes:
+
+- **`flex` items never trigger hygiene rules.** Jeans, trousers, dark jackets, puffer, and worn socks are valid in a clean load (by color) or a dirty load. This is deliberately **not** in the rulebook; players discover it.
+- **Lint (your ruling):** the white rag getting stained is fine (no penalty to it). The dark item getting lint is a **minor** mistake. Rags never count as lint victims (rag with rag is fine). Config `lintAffectsFlexDark` (default **true**): if false, only dark `clean`-hygiene items count as victims. All par solutions are valid with the flag either way (verified).
+- **Lint is evaluated only in dirty loads.** In a clean load, a fluffy white towel with dark items is the fatal `COLOR_DYE`, which supersedes lint.
+- `jacket_white` (light, dirty) with dark flex items in a dirty load is fine: no lint (it is not a shedder), color rules are off.
+- **Underwear is `clean`**: never in a dirty load. Worn socks are `flex`, so they may go in a dirty load.
+- A dirty item can never sit in a "clean load" by definition: placing a rag in the drum makes it a dirty load, and the clean items in it are what get penalized. So a rag in a load of clean dark clothes yields `HYG_DIRTY_WITH_DARK` (major) for each clean dark item, plus `COLOR_LINT` if the rag is the white one. A rag in a load with clean light clothes is fatal.
+
+### 7.4 Size rules
+
+| Rule | Condition | Result |
+|---|---|---|
+| `JAM` | weight over 90, **or** wet bulk over 100 | spin jams, **immediate fail**, 0 stars, jam payoff |
+| overfull display | dry bulk over 100 or weight over 90 (ring over 100%) | lid bulges. Because wet bulk is never less than dry bulk, this state **always** jams |
+| light load | fill under 70% | not a mistake; only costs time |
+
+`wetBulk = sum(bulk * swellMultiplier)` over all items in the drum (bags and bag contents included; bag swell is low). Boundaries: weight 90 is allowed, 91 jams; wet bulk 100.0 is allowed, anything above jams.
+
+The jam payoff shows **wet bulk**: swollen items balloon and wedge the drum (puffer and duvet most dramatically).
+
+### 7.5 Small items (from Tutorial 4)
+
+| Rule | Condition | Severity |
+|---|---|---|
+| `SMALL_LOOSE` | a `small` item is in the drum outside a bag | **major**, per item |
+
+The mistake is **always committed**; a seeded RNG only chooses how it looks: **lost** (item vanishes; for socks a lone sock remains hanging; underwear leaves an empty peg) or **stretched** (item hangs long and warped). `lost = rng() < lostChance` (config, default 0.5). Both are major. Seed = `hash(levelSeed, loadIndex, instanceId)` so replays match exactly. The rule is inactive in levels with `smallItemLoss = false` (no small items exist there anyway).
+
+### 7.6 Severity and stars
+
+| Severity | Rules | Visual weight |
+|---|---|---|
+| fatal | `COLOR_BLEED`, `COLOR_DYE`, `HYG_DIRTY_WITH_LIGHT`, `JAM` | ruined item highlighted |
+| major | `HYG_DIRTY_WITH_DARK`, `SMALL_LOOSE` | stains / lost / stretched |
+| minor | `COLOR_LINT` | white specks on the dark item |
+
+Severity drives visuals and whether a run is a 0-star fail. Between major and minor there is **no star difference** (any mistake caps at 1 star).
+
+---
+
+## 8. Scoring and unlocks
+
+| Stars | Condition |
+|---|---|
+| 0 | any fatal violation or a jam |
+| 1 | finished, with one or more non-fatal violations (minor or major) |
+| 2 | finished with **no violations of any kind** |
+| 3 | no violations **and** total time at or under par |
+
+- Light loads are not mistakes; they only cost time and therefore can prevent the 3rd star.
+- Fast and sloppy still gets 1. Time never rescues mistakes.
+- **Completion** means a non-fatal finish (1 to 3 stars). Completion unlocks the next level. 0 stars unlocks nothing; offer **Retry**. **Level 1-1 is unlocked from the start.**
+- Best stars and best time per level are saved. Replays are allowed from the level select.
+
+---
+
+## 9. Timer and par times
+
+### 9.1 Timer behavior
+
+- `totalTimeMs = elapsed decision time + sum(cycle costs)`.
+- The timer **starts on the first pointer interaction** inside the level (after any tutorial card is dismissed). Opening the rulebook counts as an interaction.
+- **Tutorial cards pause the timer.** The **rulebook does not**.
+- The timer also pauses when the page is hidden (`visibilitychange`) and resumes when visible, so backgrounding the app is not punished. This is recorded as an event.
+- Pressing **Start** adds the cycle cost instantly (tick-forward animation on the number). The 1.5 s spin adds no time and is skippable. With `prefers-reduced-motion`, skip the animation entirely.
+- Display: small number at **top middle**, `m:ss`. The Start button shows the live cost, updating as items are placed.
+
+### 9.2 Cycle cost
+
+```
+cycleCost(seconds) = 6 + max(weight, dryBulk) / 15      (bags included)
+```
+
+6 s base keeps "fewer loads" the winning strategy. 60 -> 10.0 s, 90 -> 12.0 s.
+
+### 9.3 Par time
+
+```
+parSeconds = round( sum(cycleCost of par solution) + m * (3 * itemCount + 10) )
+```
+
+`itemCount` counts draggable items (not bags). `m` is per level (generous early, tighter later). **Par values are first estimates** (3 s per item is a guess); tune `par.seconds` in `levels.json` from recorded runs. 3 stars requires `totalTimeMs <= parSeconds * 1000`.
+
+---
+
+## 10. Progression, tutorial cards, rulebook
+
+Each block: **A** introduces the idea in isolation, **B** adds a gotcha, **C** is the hardest and remixes earlier ideas.
+
+| Tutorial | New knowledge | New mechanic |
+|---|---|---|
+| 1 | Lights vs darks, bright colors run | Two-way sort, Start, cycle cost |
+| 2 | Load sizing | Fill ring, weight and bulk limits, puffer discovery |
+| 3 | Household items by color; rags are dirty | Hygiene rules, flexible items and lint (discovered) |
+| 4 | Small items get lost or stretched | Bags |
+
+### 10.1 Tutorial cards
+
+A card is a modal with one illustration and one sentence, shown **once ever**, at the level where its idea first appears (timer paused). Cards live in `cards.json`; each level lists at most one `tutorialCard`.
+
+| Card id | First level | Sentence |
+|---|---|---|
+| `t1_sort` | 1-1 | "Lights and darks wash apart." |
+| `t1_bleed` | 1-2 | "Bright colors can run onto other clothes." |
+| `t2_size` | 2-1 | "Aim for a good fill. But wet clothes swell." (illustration: a dry pile swelling in a filled drum; it does **not** say which items swell) |
+| `t3_household` | 3-1 | "Sheets and towels wash by color too." |
+| `t3_rags` | 3-2 | "Rags are dirty. Keep them away from clean clothes." |
+| `t4_bags` | 4-1 | "Small things slip away. Put them in a bag." |
+
+Never carded (discovered): flexible items, puffer swelling, worn socks, lint.
+
+### 10.2 Rulebook
+
+A modal with one page per tutorial. Each page is **icons plus one caption**. Pages unlock when their first card is seen; a page can gain a line when a later card appears. The rulebook is openable any time and does not pause the timer.
+
+| Page | Unlocked by | Content |
+|---|---|---|
+| 1 | `t1_sort` | Light shirt icon and dark shirt icon, apart. After `t1_bleed`: red tee with drop icon, caption "Bright colors run." |
+| 2 | `t2_size` | Drum with ring zones, caption "Good fill: 70 to 90%." |
+| 3 | `t3_household` | Towel and sheet icons joining their color group. After `t3_rags`: rag icon crossed from clean clothes, caption "Rags are dirty." |
+| 4 | `t4_bags` | Sock and underwear icons going into a bag, caption "Bag the small stuff." |
+
+---
+
+## 11. Payoff scene (visual consequences)
+
+Results for all loads are revealed together after the last load, then a clothesline animation (about 4 s, skippable, not interactive). Each item hangs with its final look.
+
+| Event | Visual |
+|---|---|
+| `COLOR_BLEED` | Lights turn **pink** (magenta-pink `#E5338F`, clearly different from the salmon UI accent) |
+| `COLOR_DYE` | Lights turn grey-blue |
+| `HYG_DIRTY_WITH_LIGHT` | Grey smudges spread across light items |
+| `HYG_DIRTY_WITH_DARK` | Stains on dark items |
+| `COLOR_LINT` | White specks on the dark item |
+| `SMALL_LOOSE`, lost | Lone sock with an empty peg beside it; for underwear, an empty peg |
+| `SMALL_LOOSE`, stretched | Item hangs long and wavy |
+| `JAM` | Drum shudders and stops. The payoff shows the **wet bulk**: items balloon and wedge the drum. Earlier loads are not shown; the jam is the whole scene. |
+| any fatal item | Subtle highlight ring around the ruined item, no text |
+| Stars | Appear at the end; 3 stars adds sunlight. Also show total time and par as two small numbers. |
+
+Buttons: **Retry**, **Next** (if completed), **Level select**.
+
+---
+
+## 12. Levels
+
+All values below come from `verify_gdd.py` (`python3 verify_gdd.py` prints them; `--export` regenerates the JSON). Every par solution has **zero violations**, no jam, and a load count proven minimal (no valid partition into fewer loads exists). `Fill` = max(weight%, dry bulk%); `Wet` = wet bulk; `Cost` = cycle seconds.
+
+### 12.1 Tutorial 1: Lights vs darks (`showFillRing: false`)
+
+**1-1 Two piles** (6 items, 2 loads, m 1.6, par **59 s**, card `t1_sort`)
+
+| Load | Contents | W | B | Wet | Fill | Cost |
+|---|---|---|---|---|---|---|
+| Lights | tee_white, shirt_white, tee_mint | 13 | 16 | 16 | 16% | 7.1 |
+| Darks | tee_black, tee_grey, shirt_black | 13 | 16 | 16 | 16% | 7.1 |
+
+Gotcha: grey is dark.
+
+**1-2 Something red** (8 items, 2 loads, m 1.6, par **70 s**, card `t1_bleed`)
+
+| Load | Contents | W | B | Wet | Fill | Cost |
+|---|---|---|---|---|---|---|
+| Lights | tee_white, shirt_white, tee_mint, shirt_pastel_blue | 18 | 22 | 22 | 22% | 7.5 |
+| Darks | tee_black, shirt_navy, trousers_black, tee_red | 21 | 26 | 26 | 26% | 7.7 |
+
+Fatal: tee_red with lights (pink payoff).
+
+**1-3 Remix** (11 items, 2 loads, m 1.6, par **85 s**)
+
+| Load | Contents | W | B | Wet | Fill | Cost |
+|---|---|---|---|---|---|---|
+| Lights | shirt_pastel_yellow, tee_white, tee_beige, shirt_white, tee_mint | 22 | 27 | 27 | 27% | 7.8 |
+| Darks | tee_grey, shirt_striped, tee_black, tee_red, trousers_black, shirt_navy | 30 | 37 | 37 | 37% | 8.5 |
+
+Traps: striped shirt and grey are dark; pastel yellow and beige are light; red bleeds.
+
+### 12.2 Tutorial 2: Load sizing (`showFillRing: true`)
+
+**2-1 Two even loads** (16 items, 2 loads, m 1.4, par **104 s**, card `t2_size`)
+Items: jeans_blue x3, hoodie_navy x3, trousers_black x3, shirt_black x3, tee_black x2, tee_grey x2 (all dark; total weight 133, so one load jams).
+
+| Load | Contents | W | B | Wet | Fill | Cost |
+|---|---|---|---|---|---|---|
+| A | jeans x2, hoodie x2, trousers x1, shirt x2, tee_black x1 | 74 | 87 | 93.4 | 87% | 11.8 |
+| B | jeans x1, hoodie x1, trousers x2, shirt x1, tee_black x1, tee_grey x2 | 59 | 71 | 74.2 | 71% | 10.7 |
+
+**2-2 Topping up** (17 items, 3 loads, m 1.4, par **116 s**)
+Lights (5): hoodie_white, tee_white x2, shirt_pastel_blue, tee_beige. Darks (12): jeans_blue x4, hoodie_navy x4, trousers_black x2, shirt_black, tee_red.
+
+| Load | Contents | W | B | Wet | Fill | Cost |
+|---|---|---|---|---|---|---|
+| Lights | all 5 light items | 29 | 37 | 40.2 | 37% | 8.5 |
+| Dark A | jeans x2, hoodie x2, trousers, tee_red | 64 | 75 | 81.4 | 75% | 11.0 |
+| Dark B | jeans x2, hoodie x2, trousers, shirt_black | 65 | 76 | 82.4 | 76% | 11.1 |
+
+Traps: the white hoodie is W12 B16 (looks small). The lights load is light (37%) but topping it up with dark items is fatal. A light load is correct.
+
+**2-3 The puffer** (19 items, 3 loads, m 1.4, par **126 s**)
+Lights (9): hoodie_white x3, tee_white x2, shirt_white, shirt_pastel_yellow, tee_beige, tee_mint. Darks (10): puffer_navy, hoodie_navy x2, jeans_blue x3, trousers_black, tee_red, tee_grey, shirt_black.
+
+| Load | Contents | W | B | Wet | Fill | Cost |
+|---|---|---|---|---|---|---|
+| Lights | all 9 light items | 62 | 80 | 89.6 | 80% | 11.3 |
+| Dark A | hoodie_navy x2, jeans x3, trousers | 74 | 84 | 90.4 | 84% | 11.6 |
+| Puffer | puffer, tee_red, tee_grey, shirt_black | 25 | 56 | 96.0 | 56% | 9.7 |
+
+The trap: puffer + hoodie x2 + trousers reads 82% dry but is **128.4 wet and jams**. The puffer (wet 80) leaves room for only about 20 wet bulk of other items. Total dark wet bulk is 186, so two dark loads are the minimum.
+
+### 12.3 Tutorial 3: Household items and hygiene
+
+**3-1 Sheets and towels by color** (12 items, 2 loads, m 1.3, par **81 s**, card `t3_household`)
+
+| Load | Contents | W | B | Wet | Fill | Cost |
+|---|---|---|---|---|---|---|
+| Lights | duvet_white, towel_white, tee_white, shirt_white, tee_mint | 41 | 56 | 86.4 | 56% | 9.7 |
+| Darks | curtain_dark, towel_navy x2, hoodie_navy, tee_black x2, shirt_black | 63 | 80 | 92.8 | 80% | 11.3 |
+
+Gotcha: the white duvet is a light item and its high swell (28 -> 56 wet) fills the load.
+
+**3-2 The white rag** (14 items, 3 loads, m 1.3, par **95 s**, card `t3_rags`)
+
+| Load | Contents | W | B | Wet | Fill | Cost |
+|---|---|---|---|---|---|---|
+| Lights | duvet_white, towel_white, towel_pastel, tee_white, shirt_pastel_blue | 47 | 63 | 95.8 | 63% | 10.2 |
+| Clean darks | sheet_dark, towel_navy, shirt_black, tee_black, **jeans_blue, trousers_black** | 61 | 71 | 78.2 | 71% | 10.7 |
+| Dirty | rag_grey, rag_blue, rag_white | 6 | 6 | 6.0 | 7% | 6.4 |
+
+Traps and discoveries:
+
+- `rag_white` in the lights: **fatal**. `rag_grey` or `rag_blue` in the clean darks: **major** per clean item.
+- The **jeans and trousers are flex**. Because the white rag is in the dirty load, putting jeans or trousers with the rags is `COLOR_LINT` (**minor**), so the perfect solution washes them with the clean darks. The player discovers this.
+
+**3-3 Everything together** (19 items, 4 loads, m 1.3, par **127 s**)
+
+| Load | Contents | W | B | Wet | Fill | Cost |
+|---|---|---|---|---|---|---|
+| Lights | sheet_white, towel_white, towel_pastel, tee_white, shirt_white, hoodie_white | 61 | 75 | 87.8 | 75% | 11.0 |
+| Clean darks | curtain_dark, towel_navy, towel_red, shirt_black, tee_black, jeans_lightwash, trousers_black | 69 | 83 | 92.6 | 83% | 11.5 |
+| Dirty | rag_grey, rag_blue, rag_white, jacket_white | 16 | 24 | 24.0 | 24% | 7.6 |
+| Puffer | puffer_navy, jacket_navy | 22 | 58 | 98.0 | 58% | 9.9 |
+
+Traps (all verified): towel_red with lights (fatal bleed); jeans_lightwash is **dark** (fatal in lights); rag_white and jacket_white in lights (fatal); fluffy white towel with darks (fatal dye); jacket_navy in the clean darks makes wet bulk 110.6 (jam); puffer in the dirty load jams (wet 104) and also lints; any dark flex item with the white rag is lint. Minimum loads is 4.
+
+### 12.4 Tutorial 4: Small items and bags (`smallItemLoss: true`, 2 bags)
+
+**4-1 The first lost sock** (9 items, 2 loads, m 1.6, par **75 s**, card `t4_bags`)
+
+| Load | Contents | W | B | Wet | Fill | Cost |
+|---|---|---|---|---|---|---|
+| Lights | tee_white, hoodie_white, bag(sock_white, undies_white) | 22 | 27 | 30.2 | 27% | 7.8 |
+| Darks | jeans_blue, shirt_black, tee_black, bag(sock_black, undies_black) | 29 | 31 | 31.0 | 32% | 8.1 |
+
+Each loose small item is a major mistake (lost or stretched). Uses both bags.
+
+**4-2 Whose bag?** (18 items, 3 loads, m 1.3, par **111 s**)
+
+| Load | Contents | W | B | Wet | Fill | Cost |
+|---|---|---|---|---|---|---|
+| Lights | tee_white, hoodie_white, sheet_white, bag(undies_white x2, sock_white) | 44 | 53 | 61.0 | 53% | 9.5 |
+| Clean darks | hoodie_navy, jeans_blue, shirt_black, bag(undies_black x2, sock_black, **sock_worn_navy**) | 41 | 46 | 49.2 | 46% | 9.1 |
+| Dirty | rag_grey, rag_blue, jacket_white, jeans_lightwash, trousers_black | 36 | 46 | 46.0 | 46% | 9.1 |
+
+Here there is **no white rag**, so jeans washing with rags is a clean, valid combination (your "jeans with rags" case). Traps: a bag holding a white and a black item is `COLOR_DYE` in any load; underwear in the dirty load is major; worn socks are flex and may ride in either bag/load; jacket_white must go in the dirty load.
+
+**4-3 Bag logistics** (21 items + 2 bags, 4 loads, m 1.2, par **125 s**)
+
+| Load | Contents | W | B | Wet | Fill | Cost |
+|---|---|---|---|---|---|---|
+| Lights | duvet_white, hoodie_white, tee_white, bag(sock_white, undies_white) | 40 | 55 | 86.2 | 55% | 9.7 |
+| Clean darks | curtain_dark, shirt_black, tee_red, towel_navy, jeans_lightwash, bag(sock_black x2, undies_black x2) | 61 | 71 | 78.2 | 71% | 10.7 |
+| Dirty | rag_grey, rag_blue, rag_white, jacket_white | 16 | 24 | 24.0 | 24% | 7.6 |
+| Puffer | puffer_navy, trousers_black, bag(sock_worn_navy) | 24 | 54 | 94.0 | 54% | 9.6 |
+
+This par solution uses **three bags across four loads**, so it relies on bag reuse (default). With `bagsReusable = false` (2 bags total), the verified alternative puts `sock_worn_navy` into the clean-darks bag (5 small items, 10 bulk) and washes the puffer load without a bag. Remix traps: red tee (fatal with lights); rag_white and jacket_white (fatal in lights); jeans_lightwash is dark; puffer swell; loose small items; white rag with a dark flex item (lint).
+
+### 12.5 Level data schema (`levels.json`, abbreviated)
+
+```json
+{
+  "id": "4-3",
+  "tutorial": 4,
+  "seed": 14030,
+  "bags": 2,
+  "bagsReusable": true,
+  "flags": { "showFillRing": true, "smallItemLoss": true },
+  "tutorialCard": null,
+  "items": [{ "id": "duvet_white", "count": 1 }],
+  "par": {
+    "seconds": 125,
+    "multiplier": 1.2,
+    "minLoads": 4,
+    "solution": [{ "items": ["duvet_white", "hoodie_white", "tee_white"], "bags": [["sock_white", "undies_white"]] }]
+  }
+}
+```
+
+At level load the engine expands `items` into instances with ids `defId#n` (for example `hoodie_white#1`); recorded events refer to these.
+
+### 12.6 Minimum-load proof
+
+`verify_gdd.py` runs a backtracking search over partitions for each multi-load level and confirms no valid (zero-violation, no-jam) partition exists with one fewer load. Small items are auto-bagged during this search. Minimum load counts: 1-1:2, 1-2:2, 1-3:2, 2-1:2, 2-2:3, 2-3:3, 3-1:2, 3-2:3, 3-3:4, 4-1:2, 4-2:3, 4-3:4.
+
+### 12.7 Bag scarcity check
+
+Par solutions use bags as: 4-1: 2, 4-2: 2, 4-3: 3 (reusable) or 2 (non-reusable alternative, verified valid).
+
+---
+
+## 13. Engine specification (TypeScript)
+
+Pure module, no imports from UI. Time is always passed in as data.
+
+```ts
+export type Tier = 'light' | 'dark';
+export type Hygiene = 'clean' | 'flex' | 'dirty';
+export type Swell = 'low' | 'medium' | 'high';
+export type Severity = 'minor' | 'major' | 'fatal';
+export type RuleId =
+  | 'COLOR_BLEED' | 'COLOR_DYE' | 'COLOR_LINT'
+  | 'HYG_DIRTY_WITH_LIGHT' | 'HYG_DIRTY_WITH_DARK'
+  | 'SMALL_LOOSE' | 'JAM';
+
+export interface ItemDef { id: string; name: string; weight: number; bulk: number; swell: Swell;
+  tier: Tier; bleeds: boolean; hygiene: Hygiene; small: boolean; shedder: boolean; }
+export interface ItemInstance { instanceId: string; defId: string; }
+
+export interface LoadInput { items: string[]; bags: string[][]; }   // instanceIds; loose items, then bag contents
+
+export interface Violation { rule: RuleId; severity: Severity; instanceIds: string[]; }
+export type FillZone = 'light' | 'good' | 'tight' | 'overfull';
+
+export interface LoadEval {
+  weight: number; dryBulk: number; wetBulk: number;
+  fillPct: number;               // 0..N, max(weight/90, dryBulk/100) * 100
+  zone: FillZone;
+  jam: boolean;
+  cycleCostSec: number;
+  violations: Violation[];       // empty if perfect (JAM is reported separately via `jam`)
+  illegal: string[];             // bag over capacity, >2 bags, non-small item in a bag, etc.
+}
+
+export interface Config {
+  drumWeight: 90; drumBulk: 100;
+  bagWeight: 2; bagBulk: 2; bagBulkCap: 12; maxBagsPerLoad: 2;
+  goodFillMin: 0.7; goodFillMax: 0.9;
+  cycleBaseSec: 6; cycleDivisor: 15;
+  parSecondsPerItem: 3; parBaseSec: 10;
+  lostChance: 0.5;
+  lintAffectsFlexDark: boolean;
+  swell: { low: 1.0; medium: 1.2; high: 2.0 };
+}
+
+export function evaluateLoad(items: ItemDef[], load: LoadInput, cfg: Config): LoadEval;
+export function cycleCost(weight: number, dryBulk: number, cfg: Config): number;
+export function scoreRun(level: LevelDef, loads: LoadInput[], totalTimeMs: number, cfg: Config):
+  { stars: 0 | 1 | 2 | 3; outcome: 'complete' | 'jam'; perLoad: LoadEval[] };
+export function simulateConsequences(level: LevelDef, loads: LoadInput[], cfg: Config):
+  Record<string, ItemOutcome>;           // 'pink' | 'greyBlue' | 'smudged' | 'stained' | 'lint' | 'lost' | 'stretched' | 'ok' | 'ballooned'
+export function parSeconds(level: LevelDef, cfg: Config): number;
+export function replay(level: LevelDef, run: RunRecord, cfg: Config): ReplayResult;  // recomputes stars, loads, time
+```
+
+Determinism details:
+
+- `rng = mulberry32(fnv1a32(`${levelSeed}:${loadIndex}:${instanceId}`))`; one draw per loose small item; `lost = rng() < cfg.lostChance`.
+- Violation evaluation order is fixed as written in Section 7 so snapshots are stable. Report `COLOR_*` once per load, `HYG_*` and `COLOR_LINT` and `SMALL_LOOSE` once per affected item.
+- Stars: any `fatal` or `jam` -> 0; any other violation -> 1; none -> 2; none and `totalTimeMs <= par*1000` -> 3.
+- `JAM` ends the run at that load; `scoreRun` then returns outcome `jam` and 0 stars regardless of earlier loads.
+- The engine rejects illegal states (it never silently fixes them): more than 2 bags in a load, a non-small item in a bag, bag bulk over 12.
+
+Config lives in `src/content/config.json` and matches the defaults above.
+
+---
+
+## 14. Persistence (offline-first)
+
+**localStorage key `freshlaundry.save.v1`:**
+
+```json
+{
+  "schema": 1,
+  "playerId": "uuid-v4",
+  "consent": "unset",
+  "seenCards": ["t1_sort"],
+  "levels": { "1-1": { "bestStars": 2, "bestTimeMs": 51200, "attempts": 3, "completed": true } },
+  "settings": { "reducedMotion": null }
+}
+```
+
+- `consent`: `unset | yes | no`. `playerId` is generated on first launch.
+- Unlocked levels are **derived**: 1-1 always; level N+1 if level N has `completed` (best stars 1 or more).
+- Handle storage failure (private mode): keep an in-memory copy and continue.
+- A **Reset progress** button in settings clears `levels` and `seenCards` (not `playerId` or `consent`).
+
+---
+
+## 15. Replay recording
+
+The game records **decisions, not pointer paths**. One JSON document per attempt:
+
+```json
+{
+  "schema": 1,
+  "runId": "uuid-v4",
+  "gameVersion": "0.1.0",
+  "playerId": "uuid-v4",
+  "levelId": "2-3",
+  "startedAt": "2026-11-02T04:12:30Z",
+  "events": [
+    { "t": 1200, "type": "place", "item": "hoodie_white#1", "to": "drum" },
+    { "t": 1800, "type": "place", "item": "sock_white#1", "to": "bag:1" },
+    { "t": 2100, "type": "bagToDrum", "bag": 1 },
+    { "t": 2600, "type": "place", "item": "hoodie_white#1", "to": "floor" },
+    { "t": 5400, "type": "start", "cycleCostMs": 11300 },
+    { "t": 61000, "type": "rulebook", "open": true },
+    { "t": 61900, "type": "rulebook", "open": false }
+  ],
+  "result": { "outcome": "complete", "stars": 2, "timeMs": 131200, "loads": 3, "violations": [] }
+}
+```
+
+- `t` = timer milliseconds (pauses excluded, cycle costs included after each `start`).
+- Event types: `place` (to: `hamper | floor | drum | bag:1 | bag:2`), `bagToDrum`, `bagFromDrum`, `start`, `skipAnimation`, `rulebook`, `card` (open/close), `pause`/`resume` (visibility), `levelEnd`, `abandon`.
+- `result` is stored for convenience, but `replay()` must be able to recompute it exactly from `events` plus the level.
+- Max payload about 100 KB (enforced client and server side).
+
+---
+
+## 16. Analytics backend (Supabase) and privacy
+
+### 16.1 Outbox
+
+1. At level end (complete, jam, or abandon) write the run JSON to an **IndexedDB outbox** (store `runs`, key `runId`).
+2. Flush on app launch and on the window `online` event: POST each run, delete the entry only after success. **Treat HTTP 409 (duplicate `runId`) as success** so retries are idempotent.
+3. No Background Sync (unsupported on Safari). Cap the outbox at 200 runs (drop oldest).
+4. Upload only when `consent === 'yes'`.
+
+### 16.2 Database
+
+```sql
+create table public.runs (
+  id           uuid primary key,                       -- client runId, makes inserts idempotent
+  player_id    uuid not null,
+  game_version text not null,
+  level_id     text not null,
+  outcome      text not null check (outcome in ('complete','jam','abandon')),
+  stars        smallint not null check (stars between 0 and 3),
+  time_ms      integer not null check (time_ms >= 0),
+  payload      jsonb not null check (pg_column_size(payload) < 102400),
+  created_at   timestamptz not null default now()
+);
+alter table public.runs enable row level security;
+revoke all on public.runs from anon, authenticated;
+grant insert on public.runs to anon;
+create policy "anon insert only" on public.runs for insert to anon with check (true);
+```
+
+- The client sends `Prefer: return=minimal` (there is no select policy, so returning rows would fail).
+- The anon key is public by design; safety comes from RLS. Read data with the service role from your own machine. Add an Edge Function or rate limit later if abuse appears.
+- Env vars at build time: `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`. If either is missing, uploading is disabled (the game still works).
+
+### 16.3 Consent and privacy
+
+First launch shows one line: "Fresh Laundry sends anonymous gameplay data to help improve the game." with **OK** and **No thanks**. If declined, runs are still recorded locally but never uploaded. The choice is changeable in settings. Collected: level id, outcome, stars, time, decision events, random player id. Not collected: names, emails, device identifiers.
+
+### 16.4 Questions the data should answer
+
+Per-level fail rate (0 stars), most common violations per level, time distribution (to tune par), rulebook opens per level, abandon points, whether the discoveries (flex items, lint, puffer) are being found.
+
+---
+
+## 17. Screens and flow
+
+| Screen | Contents |
+|---|---|
+| **Boot** | Logo, consent note on first launch, Play |
+| **Level select** | 12 levels in 4 blocks, locked ones dimmed, best stars shown, replay allowed |
+| **Card** | Modal, illustration and one sentence, "Got it" |
+| **Level** | Layout in 6.1 |
+| **Rulebook** | Modal with unlocked pages (swipe or tabs) |
+| **Payoff** | Reveal, clothesline, stars, time vs par, Retry / Next / Level select |
+| **Settings** | Consent toggle, reset progress, version |
+
+**Debug mode** (`?debug=1`, read from `window.location.search` before the hash route): Solve button (auto-place the par solution), unlock all levels, par override, show wet bulk in the ring, show violations list.
+
+---
+
+## 18. Art direction and accessibility
+
+**Style:** Mini Metro-like: flat shapes, thin clean outlines, limited palette, minimal juice. Code-generated **SVG** components, one per silhouette: tee, shirt, hoodie, trousers, jeans, jacket, puffer, sock, underwear, towel, curtain, duvet, sheet set, rag, bag.
+
+| Role | Color |
+|---|---|
+| Page background | Bright teal `#26B3AE` (no beige or yellowish undertone) |
+| Panels, machine, UI | Dark teal `#0B4F55` |
+| Accent (buttons) | Salmon pink `#FF8F85` |
+| Outlines | Deep teal `#073A40` |
+| Bleed pink (payoff only) | Magenta-pink `#E5338F` |
+| Dye grey-blue (payoff) | `#7A8FA8` |
+| Smudge grey (payoff) | `#6E6E6E` at 60% |
+| Light clothes | White `#FFFFFF`, pastels, beige `#E9DCC6` (clothes only, never UI) |
+
+White items need outline plus a subtle shadow to read on teal. Dark items need a thicker outline and a lighter inner stroke.
+
+**Accessibility:** secondary non-color cue for light vs dark (outline weight), items are focusable buttons with accessible names (visually hidden), tap-to-assign everywhere, `prefers-reduced-motion` skips animations, all hit targets at least 44 px, contrast of UI text at least WCAG AA. Font: system sans-serif. Sound: none in this build.
+
+---
+
+## 19. PWA and deployment
+
+- **Manifest:** `name` "Fresh Laundry", `short_name` "Fresh Laundry", `start_url` and `scope` relative to the base path, `display: standalone`, `orientation: portrait`, `background_color` `#0B4F55`, `theme_color` `#26B3AE`, icons 192, 512, and a 512 maskable. Generate icons from one SVG with a script (`scripts/make-icons.mjs`, using `sharp`).
+- **iOS:** `apple-touch-icon`, `apple-mobile-web-app-capable`, status bar style meta; remember iOS ignores `orientation`.
+- **Service worker:** Workbox precache of all build output, `navigateFallback: index.html`, `autoUpdate`. Verify the game loads with the network off after one visit.
+- **GitHub Pages:** workflow `.github/workflows/deploy.yml`: on push to `main`, `npm ci`, `npm test`, `npm run build` with `VITE_BASE=/<repo>/` plus the Supabase vars from repository variables, then `actions/upload-pages-artifact` and `actions/deploy-pages` (permissions: `pages: write`, `id-token: write`).
+
+---
+
+## 20. Milestones (for Claude Code)
+
+| # | Milestone | Acceptance criteria |
+|---|---|---|
+| M0 | Project setup | Vite + React + TS builds; deploys to GitHub Pages; hash routing; 9:16 container, black desktop sides; landscape overlay |
+| M1 | Content and types | `items.json`, `levels.json`, `config.json`, `cards.json`, `rulebook.json` load and validate; all 12 levels present; Vitest content test passes |
+| M2 | Rules engine | Pure TS engine; **parity with `verify_gdd.py`**: every par solution has zero violations and the listed cost/par; every trap case in Section 21 matches; seeded RNG determinism |
+| M3 | Sorting UI (1-1 to 1-3) | Hamper, floor, drum; drag and tap-to-assign; Start with live cost; timer; result screen with stars (placeholder consequences) |
+| M4 | Sizing (Tutorial 2) | Fill ring and zones; overfull bulge; jam flow with wet-bulk payoff; card system with timer pause |
+| M5 | Hygiene (Tutorial 3) | Dirty/flex/lint logic; rulebook modal (timer keeps running); dirty-load results |
+| M6 | Bags (Tutorial 4) | Select-then-tap bag assignment, bag popover, bag in drum, capacity, loose-item consequences with seeded outcomes, `bagsReusable` flag |
+| M7 | Payoff scene and art | SVG silhouettes, palette, all consequence visuals, clothesline animation |
+| M8 | Progress and level select | localStorage save, derived unlocks, replay, retry/next |
+| M9 | Replay and analytics | Event recording, `replay()` reproduces results, IndexedDB outbox, idempotent Supabase upload with consent |
+| M10 | PWA and polish | Manifest, icons, service worker, offline verified, installable on Android and iOS, touch tests |
+| M11 | Playtest tooling | Debug mode, par tuning view, query notes for collected runs |
+
+**Definition of done for the sample:** all 12 levels playable offline on a phone, stars and unlocks work, and a run uploads exactly once when back online.
+
+---
+
+## 21. Test plan
+
+- **Content test:** every level's items equal the multiset of its par solution; par solution has zero violations and no jam; `par.seconds` equals the formula; `minLoads` equals the solution length.
+- **Trap cases (must match `verify_gdd.py`):**
+
+| Case | Expected |
+|---|---|
+| tee_red + tee_white + shirt_white | COLOR_BLEED fatal |
+| tee_grey + tee_white | COLOR_DYE fatal |
+| shirt_striped + shirt_white | COLOR_DYE fatal |
+| hoodie_white + tee_white + tee_black | COLOR_DYE fatal |
+| puffer_navy + hoodie_navy x2 + trousers_black | no violation, **jam** (W44 B82 wet 128.4) |
+| jeans_blue x3 + hoodie_navy x3 + trousers_black x3 | **jam** (W102) |
+| rag_white + tee_white + towel_white | HYG_DIRTY_WITH_LIGHT fatal |
+| rag_grey + shirt_black + towel_navy | HYG_DIRTY_WITH_DARK major |
+| rag_grey + rag_blue + jeans_blue | no violation |
+| rag_white + rag_grey + jeans_blue | COLOR_LINT minor |
+| rag_white + jacket_white | no violation |
+| jeans_lightwash + tee_white | COLOR_DYE fatal |
+| jacket_white + tee_white | HYG_DIRTY_WITH_LIGHT fatal |
+| towel_red + towel_white | COLOR_BLEED fatal |
+| towel_white + towel_navy | COLOR_DYE fatal |
+| 3-3 clean darks + jacket_navy | jam (wet 110.6) |
+| puffer_navy + rag_grey + rag_blue + rag_white + jacket_white | COLOR_LINT minor, jam |
+| sock_white + tee_white (loose sock) | SMALL_LOOSE major |
+| rag_grey + undies_black | HYG_DIRTY_WITH_DARK major + SMALL_LOOSE major |
+| tee_white + bag(sock_white, sock_black) | COLOR_DYE fatal |
+| tee_white + bag(undies_white x7) | illegal: bag over capacity |
+
+- **Boundary tests:** weight 90 allowed and 91 jams; wet bulk exactly 100 allowed, above 100 jams; fill exactly 70% and 90% classify into `good`.
+- **Flag tests:** with `lintAffectsFlexDark = false` all par solutions stay valid; `bagsReusable = false` leaves 4-3 solvable with the alternative in 12.4.
+- **Determinism:** same level and events give identical stars and consequence outcomes on repeated replays; different seeds change only lost vs stretched, never violations.
+- **Timer tests:** cards pause; rulebook does not; hidden page pauses; cycle cost added at Start; 3 stars at exactly par, 2 stars one millisecond over.
+- **Upload tests:** duplicate `runId` (HTTP 409) is removed from the outbox; consent `no` never uploads; failed upload keeps the entry.
+- **Manual device tests:** iOS Safari, Android Chrome, small phone viewport, desktop black sidebars, offline play after install.
+
+---
+
+## 22. Open decisions
+
+1. **Lint scope [OPEN]:** I read your ruling as "a white rag in any load with dark items gives those items minor lint," which in practice means the dirty load. Flag `lintAffectsFlexDark` controls whether dark flex items (jeans, trousers, dark jacket) count as victims. Default true. If you meant only clean dark shirts, set it false; no level changes.
+2. **Bag reuse [OPEN]:** default reusable. Non-reusable is supported and verified.
+3. **Socks as pairs:** one draggable unit (W2 B2) so the lone-sock payoff works.
+4. **Par values:** first estimates; tune from recorded data.
+5. **Puffer:** appears in 2-3 (lesson), 3-3 and 4-3 (remix). Move it if playtests find it too punishing.
+6. **Light loads:** in Tutorials 3 and 4 several optimal loads sit well under 70% (for example the 7% rag load in 3-2) because color and hygiene rules force them. They are never mistakes. If playtesters read the ring as "you did it wrong," consider hiding the zone label for loads that cannot be improved.
+7. **Later content:** Tutorial 5 (dryer, pipelined cycles as the 3-star skill, time = longer of overlapping cycles), Tutorial 6 (care labels), detergent round (skip the softener trap).
+
+---
+
+## 23. Quick reference
+
+- Light = white, pastel, beige. Dark = everything else (including grey). Bright red/colors bleed.
+- Clean load: light and dark never mix (fatal).
+- Dirty load = contains a rag or the white jacket. Color rules are off. Clean-hygiene clothes in it are penalized (light fatal, dark major). White rag with dark items = lint (minor).
+- Flex items (jeans, trousers, dark jackets, puffer, worn socks) go in a clean load by color or in a dirty load. Underwear and household items are clean-only.
+- Drum: weight 90, wet bulk 100. Ring shows dry values; good fill 70 to 90%; over 100% always jams.
+- Loose small items: lost or stretched (major). Bag: 12 bulk, 2 per level.
+- Stars: fatal/jam = 0, any mistake = 1, perfect = 2, perfect and at or under par = 3.
+- Time = decision time + cycle costs (6 + max(weight, dry bulk)/15 s). Cards pause the clock; the rulebook does not.
+
+---
+
+## Appendix A: Cross-check log (v0.1 to v0.2)
+
+| # | Issue found in v0.1 | Resolution |
+|---|---|---|
+| 1 | Section 0 pointed to "rules engine (Section 8)"; the engine was Section 13. | References rewritten. |
+| 2 | Contradiction: "a dirty load contains any dirty item" made "a dirty item in a clean load" impossible, yet a `HYG_DIRTY_IN_CLEAN` rule existed. | Rule removed; behavior described from the clean item's side (7.3). |
+| 3 | Wrong numbers: 2-1 load B wet 76 (actual 74.2); 2-2 wet 82 and 83 (actual 81.4 and 82.4); 2-3 par 127 (actual 126.47 -> 126). | All loads and pars regenerated by script. |
+| 4 | Jam logic: "dry bulk over 100 = probably jams" and "bulge not a mistake". Since wet bulk is never less than dry, over 100 **always** jams. | Corrected (6.5, 7.4); ring renamed to neutral zone labels. |
+| 5 | Lint rule existed in the engine but no level could trigger it. | New ruling implemented (7.3). The white rag now cannot share a load with dark items, so 3-2, 3-3, 4-2, 4-3 were redesigned and re-proven minimal. "Jeans with rags" is preserved in 4-2 (no white rag). |
+| 6 | Block 3 card mentioned rags, but rags first appear in 3-2. | Cards now attach to the level where each idea first appears (6 cards). |
+| 7 | "Underfilled is a mistake only if avoidable" lingered in places after you ruled it time-only. | Removed everywhere; light loads are never mistakes. |
+| 8 | Bag interaction conflict: "tap bag moves it to the drum" vs "tap bag opens contents". | Defined: tap with nothing selected opens a popover with a Put in washer button; tap with an item selected adds it; drag into drum also works (6.3). |
+| 9 | Bag capacity stated two ways (4 items, then 6 items / 12 bulk). | Single definition: 12 bulk (up to 6 small items). |
+| 10 | Missing: state machine, retry and abandon behavior, hamper/floor layout, sprite sizes, hit targets, floor rules, selection model. | Added (Sections 4, 6). |
+| 11 | Missing: timer pause on backgrounding, first-interaction definition, par rounding, time display, 3-star boundary. | Added (9.1, 9.3, 21). |
+| 12 | Missing: save format, unlock derivation, storage failure handling. | Added (Section 14). |
+| 13 | Upload design not idempotent; no SQL, env vars, or `Prefer: return=minimal`; GitHub Pages workflow absent. | Added (16, 19). |
+| 14 | Replay `t` ambiguous after cycle costs; event list incomplete (pause, abandon, card). | Defined (Section 15). |
+| 15 | Rulebook table had broken pipe formatting. | Rebuilt (10.2). |
+| 16 | Debug flag conflicted with hash routing. | Read from `window.location.search` (17). |
+| 17 | Rags and white jacket had a `tier` but unclear color-rule behavior. | Dirty items are exempt from color rules (5.2). |
+| 18 | Level data and trap cases were prose only, so Claude Code would have to re-derive them. | `items.json`, `levels.json`, and `verify_gdd.py` bundled; parity required (0.2, 21). |
+| 19 | T2 card could reveal which items swell. | Card illustrates swelling generically; the puffer discovery stays intact. |
+| 20 | Jam payoff scope unclear (earlier loads?). | Jam is the whole scene; earlier loads are not shown (11). |
