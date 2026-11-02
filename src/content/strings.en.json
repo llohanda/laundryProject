@@ -24,5 +24,20 @@
   "payoff.levelSelect": "Level select",
   "settings.consent": "Send anonymous gameplay data",
   "settings.reset": "Reset progress",
-  "settings.version": "Version {v}"
+  "settings.version": "Version {v}",
+  "level.rulebook": "Rulebook",
+  "level.menu": "Leave level",
+  "level.timer": "Time",
+  "level.start": "Start the wash",
+  "level.startCost": "Start the wash, adds {s} seconds",
+  "level.skip": "Skip",
+  "level.drum": "Washing machine",
+  "level.floor": "Floor",
+  "level.hamper": "Hamper",
+  "level.toDrum": "Put in the washer",
+  "level.toFloor": "Put on the floor",
+  "level.toHamper": "Put back in the hamper",
+  "payoff.stars": "{n} of 3 stars",
+  "payoff.time": "Your time {t}",
+  "payoff.par": "Par {t}"
 }
