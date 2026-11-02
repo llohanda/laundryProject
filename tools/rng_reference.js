@@ -1,4 +1,4 @@
-// Reference RNG for Fresh Laundry. Copy into src/engine/rng.ts (add types). Must match fixtures.json.
+// Reference RNG for laundry days. Copy into src/engine/rng.ts (add types). Must match fixtures.json.
 // Run `node rng_reference.js` to self-check against fixtures.json.
 
 // FNV-1a, 32-bit, over the UTF-8 bytes of the string.

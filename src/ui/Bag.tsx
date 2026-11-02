@@ -7,8 +7,17 @@ import { itemColors } from '../art/palette';
 import type { DragBind } from './ItemButton';
 import type { BagId, LevelState } from './levelStore';
 
-/** Six slots: every small item is bulk 2 and a bag holds 12 (GDD 5.3). */
+/** Six dots, one per 2 bulk: a bag holds 12 and a sock is 1, underwear 2 (GDD 5.3). */
 const SLOTS = content.config.bagBulkCap / 2;
+
+/** One color per filled dot, in the order the items went in. */
+export function bagDots(ids: InstanceId[]): string[] {
+  const units = ids.flatMap((id) => {
+    const def = content.itemsById[baseId(id)]!;
+    return Array<string>(def.bulk).fill(itemColors[def.id]?.fill ?? '#CCCCCC');
+  });
+  return units.filter((_, i) => i % 2 === 0);
+}
 
 interface BagProps {
   s: LevelState;
@@ -22,12 +31,13 @@ interface BagProps {
 
 export function Bag({ s, bag, size, lifted, shaking, bind, onTap }: BagProps) {
   const items = s.bagOrder[bag];
+  const dots = bagDots(items);
   const hit = Math.max(44, size);
   return (
     <button
       type="button"
       className={`item bag${lifted ? ' lifted' : ''}${shaking ? ' shake' : ''}`}
-      aria-label={t('level.bag', { n: bag, k: items.length })}
+      aria-label={t('level.bag', { n: bag, k: dots.length })}
       data-drop={`bag:${bag}`}
       style={{ width: hit, height: hit }}
       {...bind(`bag:${bag}`, size)}
@@ -36,8 +46,7 @@ export function Bag({ s, bag, size, lifted, shaking, bind, onTap }: BagProps) {
         onTap(bag);
       }}
     >
-      <BagSprite size={size} filled={items.length} slots={SLOTS}
-        contents={items.map((id) => itemColors[baseId(id)]?.fill ?? '#CCCCCC')} />
+      <BagSprite size={size} filled={dots.length} slots={SLOTS} contents={dots} />
     </button>
   );
 }

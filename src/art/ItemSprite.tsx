@@ -1,6 +1,6 @@
 // Code-generated SVG items (GDD 5.4, 18): one silhouette per garment kind on a 48 x 48 grid,
-// flat fills, clean outlines. Light vs dark also differs by outline weight (the
-// colorblind-safe secondary cue). Dirty items carry smears; worn socks carry smell lines.
+// flat fills, one clean outline for every item, so light and dark garments are the same size.
+// Dirty items carry smears; worn socks carry smell lines.
 // An ItemOutcome (GDD 13.6) draws the payoff look: tint, shape, ruined ring.
 import { useId } from 'react';
 import type { ItemDef, ItemOutcome } from '../engine';
@@ -29,8 +29,6 @@ export function kindOf(id: string): Kind {
   return hit[1];
 }
 
-const SOCK = 'M13 6 L22 6 L22 27 L30 32 Q34 39 27 41 L16 41 Q11 40 13 34 Z';
-
 /** Outline of each kind; the outline is also the clip path for stripes, tints and marks. */
 const BODY: Record<Kind, string> = {
   tee: 'M16 7 Q24 12 32 7 L43 13 L38 21 L33 18 L33 42 L15 42 L15 18 L10 21 L5 13 Z',
@@ -40,7 +38,7 @@ const BODY: Record<Kind, string> = {
   jeans: 'M13 4 L35 4 L38 44 L28 44 L24 17 L20 44 L10 44 Z',
   jacket: 'M16 5 L24 9 L32 5 L43 12 L42 37 L35 36 L35 45 L13 45 L13 36 L6 37 L5 12 Z',
   puffer: 'M14 6 Q24 2 34 6 L45 14 L44 35 L37 34 Q39 40 36 45 L12 45 Q9 40 11 34 L4 35 L3 14 Z',
-  sock: `M20 3 L29 3 L29 24 L37 29 Q41 36 34 38 L23 38 Q18 37 20 31 Z ${SOCK}`,
+  sock: 'M16 4 L28 4 L28 26 L38 32 Q43 40 34 43 L21 43 Q13 42 16 34 Z',
   undies: 'M7 14 L41 14 L39 24 Q30 27 27 37 L21 37 Q18 27 9 24 Z',
   towel: 'M6 12 Q24 10 42 12 L42 38 Q24 40 6 38 Z',
   curtain: 'M8 9 L40 9 Q43 26 42 44 L6 44 Q5 26 8 9 Z',
@@ -58,7 +56,7 @@ const DETAIL: Record<Kind, string> = {
   jeans: 'M13 9 L35 9 M24 9 L24 17 M15 9 Q17 15 21 13 M33 9 Q31 15 27 13',
   jacket: 'M24 9 L24 45 M16 5 L20 14 L24 9 L28 14 L32 5 M15 30 L21 30 M27 30 L33 30',
   puffer: 'M4 20 Q24 17 44 20 M4 27 Q24 24 44 27 M11 34 Q24 31 37 34 M12 40 Q24 38 36 40 M24 5 L24 45',
-  sock: 'M13 11 L22 11',
+  sock: 'M16 11 L28 11',
   undies: 'M7 18 L41 18',
   towel: 'M6 30 Q24 32 42 30 M6 34 Q24 36 42 34',
   curtain: 'M14 9 Q12 26 13 44 M21 9 Q19 26 20 44 M28 9 Q30 26 29 44 M35 9 Q37 26 36 44',
@@ -66,6 +64,9 @@ const DETAIL: Record<Kind, string> = {
   sheet: 'M6 23 L42 23 M6 32 L42 32 M10 15 L32 15',
   rag: 'M12 14 L16 18 M30 13 L33 17 M14 32 L18 29 M31 33 L35 30',
 };
+
+/** Worn items carry smears and smell lines (GDD 5.4). */
+const WORN = new Set(['sock_worn_navy', 'undies_worn']);
 
 /** The curtain hangs from rings, drawn above the outline. */
 const CURTAIN_RINGS = [11, 18, 25, 32, 39];
@@ -92,12 +93,13 @@ export function ItemSprite({ def, size, outcome, className }: Props) {
   const lost = outcome?.shape === 'lost';
   const stretched = outcome?.shape === 'stretched';
 
-  // A lost underwear leaves only an empty peg (drawn by the clothesline); a lost pair of
-  // socks leaves one lone sock (GDD 11, 13.6).
-  if (lost && kind === 'undies') {
+  // A lost sock or underwear leaves only an empty peg (drawn by the clothesline); the sock's
+  // partner stays on the line (GDD 11, 13.6).
+  if (lost && (kind === 'undies' || kind === 'sock')) {
     return <svg width={size} height={size} viewBox="0 0 48 48" aria-hidden="true" className="item-sprite" />;
   }
-  const body = lost && kind === 'sock' ? SOCK : BODY[kind];
+  const body = BODY[kind];
+  const grubby = def.hygiene === 'dirty' || WORN.has(def.id);
   const classes = ['item-sprite', stretched && 'stretched', className].filter(Boolean).join(' ');
 
   return (
@@ -118,7 +120,7 @@ export function ItemSprite({ def, size, outcome, className }: Props) {
             {[10, 17, 24, 31, 38].map((x) => <line key={x} x1={x} y1="0" x2={x} y2="48" />)}
           </g>
         )}
-        {def.hygiene === 'dirty' && (
+        {grubby && (
           // Dirty items read as dirty before washing (GDD 5.4).
           <g fill={ui.dirtMark} opacity="0.55">
             <ellipse cx="17" cy="30" rx="6" ry="3.5" transform="rotate(-20 17 30)" />
@@ -145,14 +147,10 @@ export function ItemSprite({ def, size, outcome, className }: Props) {
           </g>
         )}
       </g>
-      <path d={DETAIL[kind]} fill="none" stroke={ui.outline} strokeOpacity="0.55" strokeWidth="1.2"
+      <path d={DETAIL[kind]} fill="none" stroke={dark ? '#FFFFFF' : ui.outline} strokeOpacity={dark ? 0.6 : 0.55} strokeWidth="1.2"
         strokeLinecap="round" strokeLinejoin="round" clipPath={`url(#${clip})`} />
-      <path d={body} fill="none" stroke={ui.outline} strokeWidth={dark ? 3 : 1.5} strokeLinejoin="round" />
-      {dark && (
-        <path d={body} fill="none" stroke="#FFFFFF" strokeOpacity="0.35" strokeWidth="1"
-          strokeLinejoin="round" transform="translate(24 24) scale(0.86) translate(-24 -24)" />
-      )}
-      {def.id === 'sock_worn_navy' && (
+      <path d={body} fill="none" stroke={ui.outline} strokeWidth="1.5" strokeLinejoin="round" />
+      {WORN.has(def.id) && (
         <g fill="none" stroke={ui.outline} strokeWidth="1.3" strokeLinecap="round" opacity="0.7">
           <path d="M39 15 q-2 -3 0 -6 q2 -3 0 -6" /><path d="M44 17 q-2 -3 0 -6 q2 -3 0 -6" />
         </g>

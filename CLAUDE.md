@@ -1,4 +1,4 @@
-# Fresh Laundry
+# laundry days
 Offline-first mobile-first PWA puzzle game. The full spec is in GDD.md; read it before changing anything.
 
 - Build in the order of GDD Section 20 (milestones). One milestone per session.

@@ -55,8 +55,8 @@ describe('numeric rules', () => {
     expect(cycleCostMs(weight, dryBulk, cfg)).toBe(costMs);
   });
 
-  it.each(fx.stars)('starsFor($violations, jam=$jam, $totalMs ms, par $parSeconds) = $stars', (c) => {
-    expect(starsFor(c.violations, c.jam, c.totalMs, c.parSeconds)).toBe(c.stars);
+  it.each(fx.stars)('starsFor($violations, jam=$jam, $totalMs ms, par $parSeconds, $loads/$minLoads loads) = $stars', (c) => {
+    expect(starsFor(c.violations, c.jam, c.totalMs, c.parSeconds, c.loads, c.minLoads)).toBe(c.stars);
   });
 });
 

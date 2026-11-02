@@ -5,7 +5,8 @@ import { useStore } from 'zustand';
 import { content, t } from '../content';
 import { baseId, type InstanceId } from '../engine';
 import { BagSprite, ItemSprite, spriteSize } from '../art/ItemSprite';
-import { BagPopover } from './Bag';
+import { UiIcon } from '../art/UiIcons';
+import { BagPopover, bagDots } from './Bag';
 import { useItemDrag, type DropInfo } from './drag';
 import { Floor, floorPosFor } from './Floor';
 import { Hamper } from './Hamper';
@@ -53,6 +54,7 @@ function LevelPlay({ levelId, onRetry }: { levelId: string; onRetry(): void }) {
   const s = useStore(store);
   const actions = store.getState();
   const [openBag, setOpenBag] = useState<BagId | null>(null);
+  const [quickOpen, setQuickOpen] = useState(false);
   const [shaking, setShaking] = useState<string | null>(null);
   const shakeTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
 
@@ -143,20 +145,54 @@ function LevelPlay({ levelId, onRetry }: { levelId: string; onRetry(): void }) {
           type="button"
           className="icon-button"
           aria-label={t('level.rulebook')}
-          disabled={s.phase !== 'playing' || seenCards.length === 0}
+          disabled={s.phase !== 'playing' || s.paused || seenCards.length === 0}
           onClick={() => actions.setRulebook(true)}
         >
-          <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M4 4 H11 V20 H4 Z M13 4 H20 V20 H13 Z" fill="none" stroke="currentColor" strokeWidth="2" />
-          </svg>
+          <UiIcon name="book" />
         </button>
         <Timer read={s.timeMs} />
-        <a className="icon-button" href={hrefFor({ name: 'levels' })} aria-label={t('level.menu')}>
-          <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M4 7 H20 M4 12 H20 M4 17 H20" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
-          </svg>
-        </a>
+        <button
+          type="button"
+          className="icon-button"
+          aria-label={t('level.menu')}
+          aria-expanded={quickOpen}
+          disabled={s.phase !== 'playing'}
+          onClick={() => setQuickOpen((o) => !o)}
+        >
+          <UiIcon name="gear" />
+        </button>
       </header>
+
+      {quickOpen && (
+        <div className="quick-backdrop" onClick={() => setQuickOpen(false)}>
+          <div className="quick-panel" role="dialog" aria-label={t('level.menu')} onClick={(e) => e.stopPropagation()}>
+            <button type="button" className="icon-button round" disabled={s.phase !== 'playing'}
+              aria-label={t(s.paused ? 'level.resume' : 'level.pause')}
+              onClick={() => {
+                actions.setPaused(!s.paused);
+                setQuickOpen(false);
+              }}>
+              <UiIcon name={s.paused ? 'play' : 'pause'} />
+            </button>
+            <button type="button" className="icon-button round" aria-label={t('level.restart')}
+              onClick={() => {
+                actions.abandon();
+                onRetry();
+              }}>
+              <UiIcon name="restart" />
+            </button>
+            <a className="icon-button round" href={hrefFor({ name: 'levels' })} aria-label={t('level.leave')}>
+              <UiIcon name="exit" />
+            </a>
+          </div>
+        </div>
+      )}
+
+      {s.paused && (
+        <button type="button" className="pause-cover" aria-label={t('level.resume')} onClick={() => actions.setPaused(false)}>
+          <UiIcon name="play" size={64} />
+        </button>
+      )}
 
       <Washer
         s={s}
@@ -198,7 +234,7 @@ function LevelPlay({ levelId, onRetry }: { levelId: string; onRetry(): void }) {
         return (
           <div className="drag-ghost" style={{ left: drag.at.x - size / 2, top: drag.at.y - size / 2 }} aria-hidden="true">
             {bag !== null
-              ? <BagSprite size={size} filled={s.bagOrder[bag].length} slots={content.config.bagBulkCap / 2} />
+              ? <BagSprite size={size} filled={bagDots(s.bagOrder[bag]).length} slots={content.config.bagBulkCap / 2} />
               : <ItemSprite def={content.itemsById[baseId(drag.id)]!} size={size} />}
           </div>
         );

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useStore } from 'zustand';
 import { content, t } from '../content';
+import { UiIcon } from '../art/UiIcons';
 import { GameFrame } from './GameFrame';
 import { LevelRoute } from './Level';
 import { levelProgress, progressStore, unlockedLevels } from './progressStore';
@@ -40,16 +41,11 @@ function LevelSelect() {
       <div className="screen-head">
         <h1>{t('levelSelect.title')}</h1>
         <a className="icon-button dark" href={hrefFor({ name: 'settings' })} aria-label={t('settings.title')}>
-          <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true">
-            <circle cx="12" cy="12" r="3.5" fill="none" stroke="currentColor" strokeWidth="2" />
-            <path d="M12 2 V5 M12 19 V22 M2 12 H5 M19 12 H22 M4.9 4.9 L7 7 M17 17 L19.1 19.1 M4.9 19.1 L7 17 M17 7 L19.1 4.9"
-              stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-          </svg>
+          <UiIcon name="gear" />
         </a>
       </div>
       {tutorials.map((n) => (
         <section key={n}>
-          <h2>{t('levelSelect.tutorial', { n })}</h2>
           <div className="level-row">
             {content.levels.filter((l) => l.tutorial === n).map((l) => {
               const best = levelProgress(save, l.id).bestStars;

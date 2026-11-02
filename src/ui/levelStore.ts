@@ -30,6 +30,8 @@ export interface LevelState {
   /** The tutorial card shown at the start of this attempt, if any (GDD 10.1). */
   card: string | null;
   rulebookOpen: boolean;
+  /** The player paused from the quick settings panel; the board is covered and the timer holds. */
+  paused: boolean;
   where: Record<InstanceId, Place | 'washed'>;
   hamperOrder: InstanceId[];          // seeded shuffle; returned items take their old slot
   drumOrder: InstanceId[];            // placement order, for the chips
@@ -59,6 +61,7 @@ export interface LevelState {
   start(): void;
   finishWash(skipped: boolean): void;
   setHidden(hidden: boolean): void;
+  setPaused(paused: boolean): void;
   abandon(): void;
 }
 
@@ -145,6 +148,7 @@ export function createLevelStore(deps: LevelStoreDeps): LevelStore {
       phase: card ? 'card' : 'playing',
       card,
       rulebookOpen: false,
+      paused: false,
       where: Object.fromEntries(ids.map((id) => [id, 'hamper'])),
       hamperOrder: shuffleIds(ids, level.seed),
       drumOrder: [],
@@ -293,12 +297,21 @@ export function createLevelStore(deps: LevelStoreDeps): LevelStore {
         if (timer.isStarted) record({ t: timer.nowMs(), type: hidden ? 'pause' : 'resume' });
       },
 
+      setPaused(paused) {
+        const s = get();
+        if (s.paused === paused || (paused && !live())) return;
+        if (paused) timer.pause('menu');
+        else timer.resume('menu');
+        if (timer.isStarted) record({ t: timer.nowMs(), type: paused ? 'pause' : 'resume' });
+        set({ paused, selected: paused ? null : s.selected });
+      },
+
       abandon() {
         const s = get();
         if (s.phase === 'payoff' || s.phase === 'abandoned') return;
         record({ t: timer.nowMs(), type: 'abandon' });
         timer.pause('ended');
-        set({ phase: 'abandoned', selected: null, rulebookOpen: false });
+        set({ phase: 'abandoned', selected: null, rulebookOpen: false, paused: false });
         deps.onAbandon?.();
       },
     };

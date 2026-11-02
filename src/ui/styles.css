@@ -249,12 +249,72 @@ body,
   height: 256px;
   flex: none;
   position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 16px;
   background: var(--panel);
   border-top: 2px solid var(--outline);
+}
+
+/* A white front-loader: black control strip on top, round porthole below (GDD 6.1). */
+.machine {
+  position: absolute;
+  inset: 4px 6px;
+  border-radius: 14px;
+  background: linear-gradient(#ffffff, #eef2f3);
+  border: 2px solid var(--outline);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 4px 6px;
+}
+
+.control-strip {
+  align-self: stretch;
+  height: 48px;
+  flex: none;
+  border-radius: 10px;
+  background: #1b1e23;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 8px 0 12px;
+}
+
+.knob {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #5a6068, #2b2f35);
+  border: 2px solid #8b929a;
+  position: relative;
+}
+
+.knob::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 2px;
+  width: 2px;
+  height: 7px;
+  margin-left: -1px;
+  background: #fff;
+  border-radius: 1px;
+}
+
+.knob.small {
+  width: 18px;
+  height: 18px;
+}
+
+.knob.small::after {
+  height: 5px;
+}
+
+.led {
+  flex: 1;
+  height: 10px;
+  border-radius: 3px;
+  background: #0d3b3a;
+  box-shadow: inset 0 0 0 1px #3a4047;
 }
 
 .drum-wrap {
@@ -275,9 +335,9 @@ body,
 .drum {
   position: absolute;
   border-radius: 50%;
-  background: #0f6a72;
-  border: 8px solid #e8f3f2;
-  box-shadow: inset 0 0 0 3px var(--outline);
+  background: radial-gradient(circle at 40% 35%, #f4fbfc, #bfdde4);
+  border: 8px solid #1b1e23;
+  box-shadow: inset 0 0 0 3px #8b929a, 0 0 0 2px #8b929a;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -287,7 +347,7 @@ body,
 .drum.overfull {
   /* The lid bulges: a load over 100% always jams (GDD 6.5, 7.4). */
   animation: bulge 900ms ease-in-out infinite alternate;
-  border-color: #ffd9d6;
+  border-color: #5a1f22;
 }
 
 @keyframes bulge {
@@ -322,11 +382,10 @@ body,
   justify-content: center;
 }
 
-.washer.with-bags {
-  gap: 8px;
-}
-
 .bag-slots {
+  position: absolute;
+  left: 8px;
+  top: 66px;
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -335,7 +394,7 @@ body,
 .bag-slot-empty {
   width: 56px;
   height: 56px;
-  border: 2px dashed rgba(255, 255, 255, 0.35);
+  border: 2px dashed rgba(27, 30, 35, 0.3);
   border-radius: 12px;
 }
 
@@ -362,18 +421,18 @@ body,
 }
 
 .start {
-  width: 80px;
-  height: 80px;
+  min-width: 84px;
+  height: 44px;
   flex: none;
-  border-radius: 50%;
-  border: 3px solid var(--outline);
+  border-radius: 22px;
+  border: 2px solid #fff;
   background: var(--accent);
   color: var(--outline);
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 2px;
+  gap: 4px;
+  padding: 0 10px;
   font-weight: 700;
   cursor: pointer;
 }
@@ -463,6 +522,8 @@ body,
 
 /* ---- result screen (placeholder for the payoff scene, M7) ---- */
 .payoff {
+  position: relative;
+  overflow: hidden;
   width: 360px;
   height: 640px;
   display: flex;
@@ -473,8 +534,41 @@ body,
   color: var(--outline);
 }
 
-.payoff.sunny {
-  background: radial-gradient(circle at 50% 0%, rgba(255, 236, 150, 0.85), transparent 60%);
+/* The sun is part of the same timeline as the clothesline: it rises first and keeps shining. */
+.payoff.sunny::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(circle at 82% 8%, rgba(255, 236, 150, 0.9), transparent 65%);
+  animation: sunglow 900ms ease-out both;
+}
+
+.sun {
+  position: absolute;
+  top: 8px;
+  right: 14px;
+  pointer-events: none;
+  animation: sunrise 900ms cubic-bezier(0.3, 1.2, 0.5, 1) both;
+}
+
+.sun-rays {
+  transform-origin: 0 0;
+  animation: sunspin 16s linear infinite;
+}
+
+@keyframes sunglow {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes sunrise {
+  from { opacity: 0; transform: translateY(40px) scale(0.6); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes sunspin {
+  to { transform: rotate(360deg); }
 }
 
 .stars {
@@ -490,8 +584,17 @@ body,
   font-variant-numeric: tabular-nums;
 }
 
-.times .par {
-  opacity: 0.6;
+.after {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  animation: fadein 300ms ease-out both;
+}
+
+@keyframes fadein {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
 }
 
 .payoff-buttons {
@@ -552,6 +655,41 @@ body,
   border-radius: 50%;
   background: var(--accent);
   color: var(--outline);
+}
+
+.quick-backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 70;
+}
+
+.quick-panel {
+  position: absolute;
+  top: 52px;
+  right: 6px;
+  display: flex;
+  gap: 10px;
+  padding: 10px;
+  border-radius: 16px;
+  border: 3px solid var(--outline);
+  background: var(--panel);
+  box-shadow: 0 4px 0 rgba(7, 58, 64, 0.35);
+}
+
+.pause-cover {
+  position: absolute;
+  top: 48px;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 65;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  background: var(--panel);
+  color: var(--text-on-panel);
+  cursor: pointer;
 }
 
 .icon-button.dark {
@@ -731,10 +869,7 @@ body,
   animation: hang 500ms cubic-bezier(0.3, 1.4, 0.5, 1) both;
 }
 
-.pegs {
-  display: flex;
-  gap: 6px;
-  height: 14px;
+.hung .peg {
   z-index: 1;
 }
 
@@ -753,8 +888,29 @@ body,
   transform: scaleY(1.5) skewX(-6deg);
 }
 
-.payoff.done .hanging {
+.payoff.done .hanging,
+.payoff.done .after,
+.payoff.done .star,
+.payoff.done::before,
+.payoff.done .sun {
   animation: none;
+}
+
+/* Socks hang as a mirrored pair, side by side (GDD 11). */
+.hanging.pair {
+  gap: 0;
+  flex-direction: row;
+}
+
+.hanging.pair .hung + .hung {
+  margin-left: -7px;
+  transform: scaleX(-1);
+}
+
+.hung {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .jam-scene {
@@ -806,7 +962,7 @@ body,
   flex-direction: column;
   align-items: center;
   gap: 12px;
-  min-height: 160px;
+  min-height: 190px;
 }
 
 .star {
@@ -849,6 +1005,10 @@ body,
   .drum.overfull,
   .item.shake,
   .hanging,
+  .after,
+  .sun,
+  .sun-rays,
+  .payoff::before,
   .jam-drum,
   .jam-item,
   .star,

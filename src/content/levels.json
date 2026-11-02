@@ -833,7 +833,7 @@
         },
         {
           "id": "sock_white",
-          "count": 1
+          "count": 2
         },
         {
           "id": "undies_white",
@@ -853,7 +853,7 @@
         },
         {
           "id": "sock_black",
-          "count": 1
+          "count": 2
         },
         {
           "id": "undies_black",
@@ -861,7 +861,7 @@
         }
       ],
       "par": {
-        "seconds": 75,
+        "seconds": 85,
         "multiplierTenths": 16,
         "minLoads": 2,
         "solution": [
@@ -872,6 +872,7 @@
             ],
             "bags": [
               [
+                "sock_white",
                 "sock_white",
                 "undies_white"
               ]
@@ -885,6 +886,7 @@
             ],
             "bags": [
               [
+                "sock_black",
                 "sock_black",
                 "undies_black"
               ]
@@ -923,7 +925,7 @@
         },
         {
           "id": "sock_white",
-          "count": 1
+          "count": 2
         },
         {
           "id": "hoodie_navy",
@@ -939,15 +941,15 @@
         },
         {
           "id": "undies_black",
-          "count": 2
+          "count": 1
         },
         {
           "id": "sock_black",
-          "count": 1
+          "count": 2
         },
         {
           "id": "sock_worn_navy",
-          "count": 1
+          "count": 2
         },
         {
           "id": "rag_grey",
@@ -968,10 +970,14 @@
         {
           "id": "trousers_black",
           "count": 1
+        },
+        {
+          "id": "undies_worn",
+          "count": 1
         }
       ],
       "par": {
-        "seconds": 111,
+        "seconds": 123,
         "multiplierTenths": 13,
         "minLoads": 3,
         "solution": [
@@ -985,6 +991,7 @@
               [
                 "undies_white",
                 "undies_white",
+                "sock_white",
                 "sock_white"
               ]
             ]
@@ -998,8 +1005,9 @@
             "bags": [
               [
                 "undies_black",
-                "undies_black",
                 "sock_black",
+                "sock_black",
+                "sock_worn_navy",
                 "sock_worn_navy"
               ]
             ]
@@ -1012,7 +1020,11 @@
               "jeans_lightwash",
               "trousers_black"
             ],
-            "bags": []
+            "bags": [
+              [
+                "undies_worn"
+              ]
+            ]
           }
         ]
       }
@@ -1043,7 +1055,7 @@
         },
         {
           "id": "sock_white",
-          "count": 1
+          "count": 2
         },
         {
           "id": "undies_white",
@@ -1071,7 +1083,7 @@
         },
         {
           "id": "sock_black",
-          "count": 2
+          "count": 4
         },
         {
           "id": "undies_black",
@@ -1103,11 +1115,11 @@
         },
         {
           "id": "sock_worn_navy",
-          "count": 1
+          "count": 2
         }
       ],
       "par": {
-        "seconds": 125,
+        "seconds": 140,
         "multiplierTenths": 12,
         "minLoads": 4,
         "solution": [
@@ -1119,6 +1131,7 @@
             ],
             "bags": [
               [
+                "sock_white",
                 "sock_white",
                 "undies_white"
               ]
@@ -1134,6 +1147,8 @@
             ],
             "bags": [
               [
+                "sock_black",
+                "sock_black",
                 "sock_black",
                 "sock_black",
                 "undies_black",
@@ -1157,6 +1172,7 @@
             ],
             "bags": [
               [
+                "sock_worn_navy",
                 "sock_worn_navy"
               ]
             ]

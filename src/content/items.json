@@ -375,9 +375,9 @@
     },
     {
       "id": "sock_white",
-      "name": "White socks (pair)",
-      "weight": 2,
-      "bulk": 2,
+      "name": "White sock",
+      "weight": 1,
+      "bulk": 1,
       "swell": "low",
       "tier": "light",
       "bleeds": false,
@@ -387,9 +387,9 @@
     },
     {
       "id": "sock_black",
-      "name": "Black socks (pair)",
-      "weight": 2,
-      "bulk": 2,
+      "name": "Black sock",
+      "weight": 1,
+      "bulk": 1,
       "swell": "low",
       "tier": "dark",
       "bleeds": false,
@@ -399,9 +399,9 @@
     },
     {
       "id": "sock_worn_navy",
-      "name": "Worn gym socks (pair)",
-      "weight": 2,
-      "bulk": 2,
+      "name": "Worn gym sock",
+      "weight": 1,
+      "bulk": 1,
       "swell": "low",
       "tier": "dark",
       "bleeds": false,
@@ -430,6 +430,18 @@
       "tier": "dark",
       "bleeds": false,
       "hygiene": "clean",
+      "small": true,
+      "shedder": false
+    },
+    {
+      "id": "undies_worn",
+      "name": "Worn underwear",
+      "weight": 2,
+      "bulk": 2,
+      "swell": "low",
+      "tier": "dark",
+      "bleeds": false,
+      "hygiene": "flex",
       "small": true,
       "shedder": false
     }

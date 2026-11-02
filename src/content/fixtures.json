@@ -472,12 +472,12 @@
         "bags": []
       },
       "expect": {
-        "weight": 6,
-        "dryBulk": 7,
-        "wetBulkTenths": 70,
+        "weight": 5,
+        "dryBulk": 6,
+        "wetBulkTenths": 60,
         "zone": "light",
         "jam": false,
-        "costMs": 6467,
+        "costMs": 6400,
         "violations": [
           [
             "SMALL_LOOSE",
@@ -530,12 +530,12 @@
         ]
       },
       "expect": {
-        "weight": 10,
-        "dryBulk": 11,
-        "wetBulkTenths": 110,
+        "weight": 8,
+        "dryBulk": 9,
+        "wetBulkTenths": 90,
         "zone": "light",
         "jam": false,
-        "costMs": 6733,
+        "costMs": 6600,
         "violations": [
           [
             "COLOR_DYE",
@@ -551,6 +551,107 @@
         "items": [
           "rag_grey",
           "sock_worn_navy"
+        ],
+        "bags": []
+      },
+      "expect": {
+        "weight": 3,
+        "dryBulk": 3,
+        "wetBulkTenths": 30,
+        "zone": "light",
+        "jam": false,
+        "costMs": 6200,
+        "violations": [
+          [
+            "SMALL_LOOSE",
+            "major"
+          ]
+        ],
+        "illegal": []
+      }
+    },
+    {
+      "name": "4-2 worn underwear bagged in the dirty load",
+      "load": {
+        "items": [
+          "rag_grey",
+          "rag_blue"
+        ],
+        "bags": [
+          [
+            "undies_worn"
+          ]
+        ]
+      },
+      "expect": {
+        "weight": 8,
+        "dryBulk": 8,
+        "wetBulkTenths": 80,
+        "zone": "light",
+        "jam": false,
+        "costMs": 6533,
+        "violations": [],
+        "illegal": []
+      }
+    },
+    {
+      "name": "4-2 worn underwear bagged in a clean dark load",
+      "load": {
+        "items": [
+          "shirt_black"
+        ],
+        "bags": [
+          [
+            "undies_worn",
+            "undies_black"
+          ]
+        ]
+      },
+      "expect": {
+        "weight": 11,
+        "dryBulk": 12,
+        "wetBulkTenths": 120,
+        "zone": "light",
+        "jam": false,
+        "costMs": 6800,
+        "violations": [],
+        "illegal": []
+      }
+    },
+    {
+      "name": "4-2 worn underwear bagged with lights",
+      "load": {
+        "items": [
+          "tee_white"
+        ],
+        "bags": [
+          [
+            "undies_worn"
+          ]
+        ]
+      },
+      "expect": {
+        "weight": 8,
+        "dryBulk": 9,
+        "wetBulkTenths": 90,
+        "zone": "light",
+        "jam": false,
+        "costMs": 6600,
+        "violations": [
+          [
+            "COLOR_DYE",
+            "fatal"
+          ]
+        ],
+        "illegal": []
+      }
+    },
+    {
+      "name": "4-2 worn underwear loose",
+      "load": {
+        "items": [
+          "rag_grey",
+          "undies_worn"
         ],
         "bags": []
       },
@@ -845,6 +946,8 @@
       "jam": false,
       "totalMs": 59000,
       "parSeconds": 59,
+      "loads": 2,
+      "minLoads": 2,
       "stars": 3
     },
     {
@@ -852,6 +955,8 @@
       "jam": false,
       "totalMs": 59001,
       "parSeconds": 59,
+      "loads": 2,
+      "minLoads": 2,
       "stars": 2
     },
     {
@@ -859,6 +964,35 @@
       "jam": false,
       "totalMs": 1,
       "parSeconds": 59,
+      "loads": 2,
+      "minLoads": 2,
+      "stars": 3
+    },
+    {
+      "violations": [],
+      "jam": false,
+      "totalMs": 1,
+      "parSeconds": 59,
+      "loads": 3,
+      "minLoads": 2,
+      "stars": 2
+    },
+    {
+      "violations": [],
+      "jam": false,
+      "totalMs": 59001,
+      "parSeconds": 59,
+      "loads": 3,
+      "minLoads": 2,
+      "stars": 2
+    },
+    {
+      "violations": [],
+      "jam": false,
+      "totalMs": 1,
+      "parSeconds": 59,
+      "loads": 1,
+      "minLoads": 2,
       "stars": 3
     },
     {
@@ -871,6 +1005,8 @@
       "jam": false,
       "totalMs": 1000,
       "parSeconds": 59,
+      "loads": 2,
+      "minLoads": 2,
       "stars": 1
     },
     {
@@ -883,6 +1019,8 @@
       "jam": false,
       "totalMs": 1000,
       "parSeconds": 59,
+      "loads": 2,
+      "minLoads": 2,
       "stars": 1
     },
     {
@@ -899,6 +1037,8 @@
       "jam": false,
       "totalMs": 1000,
       "parSeconds": 59,
+      "loads": 2,
+      "minLoads": 2,
       "stars": 1
     },
     {
@@ -911,6 +1051,8 @@
       "jam": false,
       "totalMs": 1000,
       "parSeconds": 59,
+      "loads": 2,
+      "minLoads": 2,
       "stars": 0
     },
     {
@@ -927,6 +1069,8 @@
       "jam": false,
       "totalMs": 1000,
       "parSeconds": 59,
+      "loads": 2,
+      "minLoads": 2,
       "stars": 0
     },
     {
@@ -934,6 +1078,8 @@
       "jam": true,
       "totalMs": 1000,
       "parSeconds": 59,
+      "loads": 2,
+      "minLoads": 2,
       "stars": 0
     },
     {
@@ -946,6 +1092,8 @@
       "jam": true,
       "totalMs": 1000,
       "parSeconds": 59,
+      "loads": 2,
+      "minLoads": 2,
       "stars": 0
     }
   ],
@@ -1065,24 +1213,24 @@
     },
     {
       "levelId": "4-1",
-      "itemCount": 9,
+      "itemCount": 11,
       "multiplierTenths": 16,
       "sumCostMs": 15867,
-      "parSeconds": 75
+      "parSeconds": 85
     },
     {
       "levelId": "4-2",
-      "itemCount": 18,
+      "itemCount": 21,
       "multiplierTenths": 13,
-      "sumCostMs": 27667,
-      "parSeconds": 111
+      "sumCostMs": 27799,
+      "parSeconds": 123
     },
     {
       "levelId": "4-3",
-      "itemCount": 21,
+      "itemCount": 25,
       "multiplierTenths": 12,
       "sumCostMs": 37600,
-      "parSeconds": 125
+      "parSeconds": 140
     }
   ],
   "noReuseAlternative43": [
@@ -1094,6 +1242,7 @@
       ],
       "bags": [
         [
+          "sock_white",
           "sock_white",
           "undies_white"
         ]
@@ -1111,8 +1260,11 @@
         [
           "sock_black",
           "sock_black",
+          "sock_black",
+          "sock_black",
           "undies_black",
           "undies_black",
+          "sock_worn_navy",
           "sock_worn_navy"
         ]
       ]
@@ -1162,22 +1314,26 @@
         "tee_white#1",
         "hoodie_white#1",
         "sock_white#1",
+        "sock_white#2",
         "undies_white#1",
         "jeans_blue#1",
         "shirt_black#1",
         "tee_black#1",
         "sock_black#1",
+        "sock_black#2",
         "undies_black#1"
       ],
       "instanceIdsOut": [
-        "undies_black#1",
-        "shirt_black#1",
-        "jeans_blue#1",
-        "hoodie_white#1",
-        "sock_white#1",
-        "undies_white#1",
-        "tee_white#1",
         "sock_black#1",
+        "tee_white#1",
+        "undies_black#1",
+        "jeans_blue#1",
+        "shirt_black#1",
+        "sock_white#1",
+        "sock_white#2",
+        "undies_white#1",
+        "hoodie_white#1",
+        "sock_black#2",
         "tee_black#1"
       ]
     }

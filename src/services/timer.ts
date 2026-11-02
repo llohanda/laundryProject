@@ -3,7 +3,7 @@
 // reasons (hidden page during the wash animation, a tutorial card, ...) compose.
 
 export type Clock = () => number;   // monotonic milliseconds, e.g. performance.now
-export type PauseReason = 'hidden' | 'washing' | 'card' | 'ended';
+export type PauseReason = 'hidden' | 'washing' | 'card' | 'menu' | 'ended';
 
 export class RunTimer {
   private started = false;

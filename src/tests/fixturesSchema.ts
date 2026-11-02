@@ -31,6 +31,8 @@ export const FixturesFile = z.strictObject({
     jam: z.boolean(),
     totalMs: nonNegInt(),
     parSeconds: posInt(),
+    loads: posInt(),
+    minLoads: posInt(),
     stars: z.union([z.literal(0), z.literal(1), z.literal(2), z.literal(3)]),
   })),
   rng: z.strictObject({

@@ -1,12 +1,10 @@
-import type { CSSProperties, PointerEvent as ReactPointerEvent } from 'react';
+import type { CSSProperties, DragEvent as ReactDragEvent, PointerEvent as ReactPointerEvent } from 'react';
 import { ItemSprite } from '../art/ItemSprite';
 import type { InstanceId, ItemDef } from '../engine';
 
 export type DragBind = (id: InstanceId, size: number) => {
   onPointerDown(e: ReactPointerEvent<HTMLElement>): void;
-  onPointerMove(e: ReactPointerEvent<HTMLElement>): void;
-  onPointerUp(e: ReactPointerEvent<HTMLElement>): void;
-  onPointerCancel(): void;
+  onDragStart(e: ReactDragEvent<HTMLElement>): void;
 };
 
 interface Props {

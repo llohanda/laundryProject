@@ -194,6 +194,20 @@ describe('level store', () => {
     expect(store.getState().events.at(-1)!.type).toBe('abandon');
   });
 
+  it('the quick panel pause holds the timer and is recorded', () => {
+    const { store, advance } = setup('1-1');
+    store.getState().interact();
+    advance(2000);
+    store.getState().setPaused(true);
+    advance(30_000);
+    expect(store.getState().timeMs()).toBe(2000);
+    expect(store.getState().paused).toBe(true);
+    store.getState().setPaused(false);
+    advance(1000);
+    expect(store.getState().timeMs()).toBe(3000);
+    expect(store.getState().events.map((e) => e.type)).toEqual(['pause', 'resume']);
+  });
+
   it('a tutorial card holds the timer until dismissed, is recorded, and is reported as seen', () => {
     const seen: string[] = [];
     const { store, advance } = setup('2-1', { card: 't2_size', onCardSeen: (id) => seen.push(id) });
@@ -244,16 +258,17 @@ describe('level store', () => {
     const { place } = store.getState();
     expect(place('tee_white#1', 'bag:1')).toBe(false);
     expect(place('rag_grey#1', 'bag:1')).toBe(false);       // rags are not small
-    const small = ['sock_white#1', 'undies_white#1', 'sock_black#1', 'sock_black#2', 'undies_black#1', 'undies_black#2'];
+    const small = ['sock_white#1', 'sock_white#2', 'undies_white#1', 'sock_black#1', 'sock_black#2', 'undies_black#1',
+      'undies_black#2', 'sock_black#3', 'sock_black#4'];
     for (const id of small) expect(place(id, 'bag:1')).toBe(true);
-    expect(place('sock_worn_navy#1', 'bag:1')).toBe(false); // the seventh would be 14 bulk
+    expect(place('sock_worn_navy#1', 'bag:1')).toBe(false); // the 13th bulk is over the cap
     expect(store.getState().where['sock_worn_navy#1']).toBe('hamper');
     expect(place('sock_worn_navy#1', 'bag:2')).toBe(true);
     // Moving an item between bags or out of one is always allowed.
     expect(place('sock_white#1', 'floor')).toBe(true);
     expect(store.getState().bagOrder[1]).not.toContain('sock_white#1');
     // Refused moves are not recorded.
-    expect(store.getState().events.filter((e) => e.type === 'place')).toHaveLength(8);
+    expect(store.getState().events.filter((e) => e.type === 'place')).toHaveLength(11);
   });
 
   it('a level without bags refuses bag moves', () => {
@@ -298,13 +313,13 @@ describe('level store', () => {
   it('loose small items are a major mistake with a seeded look, identical on replay', () => {
     const { level, store, advance } = setup('4-1');
     play(store, advance, [
-      ['tee_white#1', 'hoodie_white#1', 'sock_white#1', 'undies_white#1'],
-      { items: ['jeans_blue#1', 'shirt_black#1', 'tee_black#1'], bags: [['sock_black#1', 'undies_black#1']] },
+      ['tee_white#1', 'hoodie_white#1', 'sock_white#1', 'sock_white#2', 'undies_white#1'],
+      { items: ['jeans_blue#1', 'shirt_black#1', 'tee_black#1'], bags: [['sock_black#1', 'sock_black#2', 'undies_black#1']] },
     ], 100);
     const p = store.getState().payoff!;
     expect(p).toMatchObject({ outcome: 'finished', stars: 1, completed: true });
-    expect(p.perLoad[0]!.violations.map((v) => v.rule)).toEqual(['SMALL_LOOSE', 'SMALL_LOOSE']);
-    for (const id of ['sock_white#1', 'undies_white#1']) {
+    expect(p.perLoad[0]!.violations.map((v) => v.rule)).toEqual(['SMALL_LOOSE', 'SMALL_LOOSE', 'SMALL_LOOSE']);
+    for (const id of ['sock_white#1', 'sock_white#2', 'undies_white#1']) {
       expect(['lost', 'stretched']).toContain(p.consequences[0]![id]!.shape);
     }
     expect(replay(defs, level, record(store, level), cfg).consequences).toEqual(p.consequences);

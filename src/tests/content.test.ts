@@ -31,9 +31,9 @@ describe('content files', () => {
     expect(() => parseContent(raw)).not.toThrow();
   });
 
-  it('has the 36-item catalog with unique ids', () => {
-    expect(content.items).toHaveLength(36);
-    expect(Object.keys(content.itemsById)).toHaveLength(36);
+  it('has the 37-item catalog with unique ids', () => {
+    expect(content.items).toHaveLength(37);
+    expect(Object.keys(content.itemsById)).toHaveLength(37);
   });
 
   it('has all 12 levels in order', () => {
@@ -120,12 +120,12 @@ describe('fixtures.json', () => {
   const fixtures = FixturesFile.parse(fixturesJson);
 
   it('passes zod validation with the GDD 21 group sizes', () => {
-    expect(fixtures.traps).toHaveLength(23);
+    expect(fixtures.traps).toHaveLength(27);
     expect(fixtures.illegal).toHaveLength(6);
     expect(fixtures.zones).toHaveLength(10);
     expect(fixtures.jam).toHaveLength(5);
     expect(fixtures.cycleCosts).toHaveLength(8);
-    expect(fixtures.stars).toHaveLength(10);
+    expect(fixtures.stars).toHaveLength(13);
     expect(fixtures.rng.fnv1a32).toHaveLength(4);
     expect(fixtures.rng.mulberry32).toHaveLength(3);
     expect(fixtures.par).toHaveLength(12);

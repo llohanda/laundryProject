@@ -31,6 +31,16 @@ describe.each(levels.map((l) => [l.id, l] as const))('par solution %s', (_id, le
   });
 });
 
+describe('extra loads', () => {
+  it('a valid run with a spare load is capped at 2 stars, however fast', () => {
+    const level = levelById('1-1');
+    const [a, b] = solutionLoads(level);
+    const split = [{ items: a!.items.slice(0, 1), bags: [] }, { items: a!.items.slice(1), bags: [] }, b!];
+    expect(scoreRun(defs, level, split, 1000, cfg)).toMatchObject({ stars: 2, completed: true });
+    expect(scoreRun(defs, level, [a!, b!], 1000, cfg).stars).toBe(3);
+  });
+});
+
 describe('scoreRun', () => {
   const level = levelById('2-3');
 
@@ -76,7 +86,7 @@ describe('violation detail', () => {
 
   it('bag contents follow color rules; a bag counts W2 B2 and 20 wet-tenths', () => {
     const e = evaluateLoad(defs, { items: ['tee_white#1'], bags: [['sock_white#1', 'sock_black#1']] }, cfg);
-    expect(e).toMatchObject({ weight: 10, dryBulk: 11, wetBulkTenths: 110 });
+    expect(e).toMatchObject({ weight: 8, dryBulk: 9, wetBulkTenths: 90 });
     expect(e.violations.map((v) => v.rule)).toEqual(['COLOR_DYE']);
   });
 
@@ -116,6 +126,7 @@ describe('replay', () => {
       { t: 900, type: 'place', item: 'tee_white#1', to: 'drum' },
       { t: 1500, type: 'place', item: 'hoodie_white#1', to: 'drum' },
       { t: 2300, type: 'place', item: 'sock_white#1', to: 'bag:1' },
+      { t: 2600, type: 'place', item: 'sock_white#2', to: 'bag:1' },
       { t: 2900, type: 'place', item: 'undies_white#1', to: 'bag:1' },
       { t: 3400, type: 'bagToDrum', bag: 1 },
       { t: 4100, type: 'start', cycleCostMs: 7800 },
@@ -123,6 +134,7 @@ describe('replay', () => {
       { t: 13400, type: 'place', item: 'shirt_black#1', to: 'drum' },
       { t: 14000, type: 'place', item: 'tee_black#1', to: 'drum' },
       { t: 14900, type: 'place', item: 'sock_black#1', to: 'bag:1' },
+      { t: 15200, type: 'place', item: 'sock_black#2', to: 'bag:1' },
       { t: 15500, type: 'place', item: 'undies_black#1', to: 'bag:1' },
       { t: 16000, type: 'bagToDrum', bag: 1 },
       { t: 16500, type: 'start', cycleCostMs: 8067 },
@@ -147,7 +159,7 @@ describe('replay', () => {
 
   it('a loose sock gives 1 star and a seeded shape', () => {
     const events = example.events.filter((e) => !(e.type === 'place' && e.item === 'sock_white#1'));
-    events.splice(3, 0, { t: 3000, type: 'place', item: 'sock_white#1', to: 'drum' });   // before bagToDrum at 3400
+    events.splice(4, 0, { t: 3000, type: 'place', item: 'sock_white#1', to: 'drum' });   // before bagToDrum at 3400
     const r = replay(defs, level, withEvents(events), cfg);
     expect(r.stars).toBe(1);
     expect(r.consequences[0]!['sock_white#1']!.shape).toMatch(/^(lost|stretched)$/);
@@ -165,7 +177,7 @@ describe('replay', () => {
 
   it('rejects moving an item that was already washed', () => {
     const events = [...example.events];
-    events.splice(6, 0, { t: 12000, type: 'place', item: 'tee_white#1', to: 'floor' });
+    events.splice(7, 0, { t: 12000, type: 'place', item: 'tee_white#1', to: 'floor' });
     expect(() => replay(defs, level, withEvents(events), cfg)).toThrow(/already washed/);
   });
 
@@ -177,7 +189,7 @@ describe('replay', () => {
   it('rejects finishing with unwashed items', () => {
     const events = example.events.filter((e) => !(e.type === 'place' && e.item === 'tee_black#1'));
     const cost = evaluateLoad(defs, {
-      items: ['jeans_blue#1', 'shirt_black#1'], bags: [['sock_black#1', 'undies_black#1']],
+      items: ['jeans_blue#1', 'shirt_black#1'], bags: [['sock_black#1', 'sock_black#2', 'undies_black#1']],
     }, cfg).cycleCostMs;
     const fixed = events.map((e) => (e.type === 'start' && e.t === 16500 ? { ...e, cycleCostMs: cost } : e))
       .map((e) => (e.type === 'levelEnd' ? { ...e, t: 16500 + cost } : e));

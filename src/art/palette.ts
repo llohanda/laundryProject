@@ -10,7 +10,7 @@ export const ui = {
   stain: '#7A5A2E',
   dirtMark: '#6B5B45',
   bagFill: '#E8F3F2',
-  ringLight: '#9FD9D5',
+  ringLight: '#5CB8B3',
   ringGood: '#7FE08A',
   ringTight: '#FFC857',
   ringOver: '#E5484D',
@@ -19,15 +19,15 @@ export const ui = {
 export interface ItemColors { fill: string; stripe?: string; }
 
 const WHITE = '#FFFFFF';
-const BLACK = '#26282B';
-const NAVY = '#1F2D5C';
+const BLACK = '#3A3D44';
+const NAVY = '#2F4A9A';
 
 export const itemColors: Record<string, ItemColors> = {
   tee_white: { fill: WHITE },
   tee_mint: { fill: '#BDEBD3' },
   tee_beige: { fill: '#E9DCC6' },
   tee_black: { fill: BLACK },
-  tee_grey: { fill: '#80868C' },
+  tee_grey: { fill: '#8D939A' },
   tee_red: { fill: '#E0302A' },
   shirt_white: { fill: WHITE },
   shirt_pastel_yellow: { fill: '#F7E58F' },
@@ -38,7 +38,7 @@ export const itemColors: Record<string, ItemColors> = {
   trousers_black: { fill: BLACK },
   hoodie_white: { fill: WHITE },
   hoodie_navy: { fill: NAVY },
-  jeans_blue: { fill: '#3B5C9E' },
+  jeans_blue: { fill: '#4A6FB5' },
   jeans_lightwash: { fill: '#8DAED6' },
   jacket_white: { fill: '#F2F2EE' },
   jacket_navy: { fill: NAVY },
@@ -47,10 +47,10 @@ export const itemColors: Record<string, ItemColors> = {
   towel_pastel: { fill: '#F5C7D1' },
   towel_navy: { fill: NAVY },
   towel_red: { fill: '#D92B2B' },
-  curtain_dark: { fill: '#3A3F4B' },
+  curtain_dark: { fill: '#515870' },
   duvet_white: { fill: WHITE },
   sheet_white: { fill: WHITE },
-  sheet_dark: { fill: '#33404F' },
+  sheet_dark: { fill: '#4B5E78' },
   rag_grey: { fill: '#9A9A9A' },
   rag_blue: { fill: '#5A7DB5' },
   rag_white: { fill: '#F4F4F0' },
@@ -59,4 +59,5 @@ export const itemColors: Record<string, ItemColors> = {
   sock_worn_navy: { fill: NAVY },
   undies_white: { fill: WHITE },
   undies_black: { fill: BLACK },
+  undies_worn: { fill: '#5B5249' },
 };

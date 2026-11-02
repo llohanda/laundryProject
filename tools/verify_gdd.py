@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Reference model + verifier for the Fresh Laundry GDD (v0.3).
+"""Reference model + verifier for the laundry days GDD (v0.3).
 
 Single source of truth for: item catalog, level contents, par solutions, rule evaluation,
 integer numeric rules, fill zones, stars, RNG, per-item outcomes, hamper shuffle.
@@ -56,11 +56,12 @@ ITEMS = {
  "rag_grey": ("Grey rag", 2, 2, "low", "dark", False, "dirty", False, False),
  "rag_blue": ("Blue rag", 2, 2, "low", "dark", False, "dirty", False, False),
  "rag_white": ("White rag", 2, 2, "low", "light", False, "dirty", False, True),
- "sock_white": ("White socks (pair)", 2, 2, "low", "light", False, "clean", True, False),
- "sock_black": ("Black socks (pair)", 2, 2, "low", "dark", False, "clean", True, False),
- "sock_worn_navy": ("Worn gym socks (pair)", 2, 2, "low", "dark", False, "flex", True, False),
+ "sock_white": ("White sock", 1, 1, "low", "light", False, "clean", True, False),
+ "sock_black": ("Black sock", 1, 1, "low", "dark", False, "clean", True, False),
+ "sock_worn_navy": ("Worn gym sock", 1, 1, "low", "dark", False, "flex", True, False),
  "undies_white": ("White underwear", 2, 2, "low", "light", False, "clean", True, False),
  "undies_black": ("Black underwear", 2, 2, "low", "dark", False, "clean", True, False),
+ "undies_worn": ("Worn underwear", 2, 2, "low", "dark", False, "flex", True, False),
 }
 
 def base(i): return i.split("#")[0]
@@ -90,12 +91,13 @@ def par_seconds(m10, n_items, sum_cost_ms):
     """round_half_up( sum(cycle costs) + m * (3*items + 10) ) with m given in tenths."""
     return (sum_cost_ms + 100 * m10 * (3 * n_items + 10) + 500) // 1000
 
-def stars_for(violations, jam, total_ms, par_s):
+def stars_for(violations, jam, total_ms, par_s, loads, min_loads):
+    """3 stars need par time AND no extra loads: a spare cycle can hide inside par on the early levels."""
     if jam: return 0
     sev = {s for _, s in violations}
     if "fatal" in sev: return 0
     if sev: return 1
-    return 3 if total_ms <= par_s * 1000 else 2
+    return 3 if total_ms <= par_s * 1000 and loads <= min_loads else 2
 
 # ---------------------------------------------------------------- RNG (must match the JS reference in the GDD)
 def fnv1a32(s):
@@ -235,26 +237,26 @@ level("3-3", 3, 13030, 13, [
   L(["rag_grey", "rag_blue", "rag_white", "jacket_white"]),
   L(["puffer_navy", "jacket_navy"])])
 level("4-1", 4, 14010, 16, [
-  L(["tee_white", "hoodie_white"], [["sock_white", "undies_white"]]),
-  L(["jeans_blue", "shirt_black", "tee_black"], [["sock_black", "undies_black"]])], card="t4_bags", small=True)
+  L(["tee_white", "hoodie_white"], [["sock_white", "sock_white", "undies_white"]]),
+  L(["jeans_blue", "shirt_black", "tee_black"], [["sock_black", "sock_black", "undies_black"]])], card="t4_bags", small=True)
 level("4-2", 4, 14020, 13, [
-  L(["tee_white", "hoodie_white", "sheet_white"], [["undies_white", "undies_white", "sock_white"]]),
-  L(["hoodie_navy", "jeans_blue", "shirt_black"], [["undies_black", "undies_black", "sock_black", "sock_worn_navy"]]),
-  L(["rag_grey", "rag_blue", "jacket_white", "jeans_lightwash", "trousers_black"])], small=True)
+  L(["tee_white", "hoodie_white", "sheet_white"], [["undies_white", "undies_white", "sock_white", "sock_white"]]),
+  L(["hoodie_navy", "jeans_blue", "shirt_black"], [["undies_black", "sock_black", "sock_black", "sock_worn_navy", "sock_worn_navy"]]),
+  L(["rag_grey", "rag_blue", "jacket_white", "jeans_lightwash", "trousers_black"], [["undies_worn"]])], small=True)
 level("4-3", 4, 14030, 12, [
-  L(["duvet_white", "hoodie_white", "tee_white"], [["sock_white", "undies_white"]]),
-  L(["curtain_dark", "shirt_black", "tee_red", "towel_navy", "jeans_lightwash"], [["sock_black", "sock_black", "undies_black", "undies_black"]]),
+  L(["duvet_white", "hoodie_white", "tee_white"], [["sock_white", "sock_white", "undies_white"]]),
+  L(["curtain_dark", "shirt_black", "tee_red", "towel_navy", "jeans_lightwash"], [["sock_black", "sock_black", "sock_black", "sock_black", "undies_black", "undies_black"]]),
   L(["rag_grey", "rag_blue", "rag_white", "jacket_white"]),
-  L(["puffer_navy", "trousers_black"], [["sock_worn_navy"]])], small=True)
+  L(["puffer_navy", "trousers_black"], [["sock_worn_navy", "sock_worn_navy"]])], small=True)
 
 EXPECTED_PAR = {"1-1": 59, "1-2": 70, "1-3": 85, "2-1": 104, "2-2": 116, "2-3": 126,
-                "3-1": 81, "3-2": 95, "3-3": 127, "4-1": 75, "4-2": 111, "4-3": 125}
+                "3-1": 81, "3-2": 95, "3-3": 127, "4-1": 85, "4-2": 123, "4-3": 140}
 EXPECTED_MIN_LOADS = {"1-1": 2, "1-2": 2, "1-3": 2, "2-1": 2, "2-2": 3, "2-3": 3,
                       "3-1": 2, "3-2": 3, "3-3": 4, "4-1": 2, "4-2": 3, "4-3": 4}
 
-NO_REUSE_43 = [L(["duvet_white", "hoodie_white", "tee_white"], [["sock_white", "undies_white"]]),
+NO_REUSE_43 = [L(["duvet_white", "hoodie_white", "tee_white"], [["sock_white", "sock_white", "undies_white"]]),
                L(["curtain_dark", "shirt_black", "tee_red", "towel_navy", "jeans_lightwash"],
-                 [["sock_black", "sock_black", "undies_black", "undies_black", "sock_worn_navy"]]),
+                 [["sock_black", "sock_black", "sock_black", "sock_black", "undies_black", "undies_black", "sock_worn_navy", "sock_worn_navy"]]),
                L(["rag_grey", "rag_blue", "rag_white", "jacket_white"]),
                L(["puffer_navy", "trousers_black"])]
 
@@ -341,6 +343,10 @@ TRAPS = [
  ("4-2 underwear in dirty load", T(["rag_grey", "undies_black"]), {("HYG_DIRTY_WITH_DARK", "major"), ("SMALL_LOOSE", "major")}, False),
  ("4-2 mixed-color bag", T(["tee_white"], [["sock_white", "sock_black"]]), {("COLOR_DYE", "fatal")}, False),
  ("4-2 worn socks loose in dirty load", T(["rag_grey", "sock_worn_navy"]), {("SMALL_LOOSE", "major")}, False),
+ ("4-2 worn underwear bagged in the dirty load", T(["rag_grey", "rag_blue"], [["undies_worn"]]), set(), False),
+ ("4-2 worn underwear bagged in a clean dark load", T(["shirt_black"], [["undies_worn", "undies_black"]]), set(), False),
+ ("4-2 worn underwear bagged with lights", T(["tee_white"], [["undies_worn"]]), {("COLOR_DYE", "fatal")}, False),
+ ("4-2 worn underwear loose", T(["rag_grey", "undies_worn"]), {("SMALL_LOOSE", "major")}, False),
  ("empty bag in drum with one tee (counts W2 B2, no violation)", T(["tee_white"], [[]]), set(), False),
 ]
 ILLEGAL_TESTS = [
@@ -352,12 +358,13 @@ ILLEGAL_TESTS = [
  ("duplicate instance", T(["tee_white#1", "tee_white#1"]), ["DUPLICATE_ITEM"]),
 ]
 
-STAR_CASES = [  # (violations, jam, totalMs, parSeconds, expected stars)
- ([], False, 59000, 59, 3), ([], False, 59001, 59, 2), ([], False, 1, 59, 3),
- ([("COLOR_LINT", "minor")], False, 1000, 59, 1), ([("SMALL_LOOSE", "major")], False, 1000, 59, 1),
- ([("COLOR_LINT", "minor"), ("SMALL_LOOSE", "major")], False, 1000, 59, 1),
- ([("COLOR_DYE", "fatal")], False, 1000, 59, 0), ([("COLOR_DYE", "fatal"), ("SMALL_LOOSE", "major")], False, 1000, 59, 0),
- ([], True, 1000, 59, 0), ([("COLOR_LINT", "minor")], True, 1000, 59, 0),
+STAR_CASES = [  # (violations, jam, totalMs, parSeconds, loads, minLoads, expected stars)
+ ([], False, 59000, 59, 2, 2, 3), ([], False, 59001, 59, 2, 2, 2), ([], False, 1, 59, 2, 2, 3),
+ ([], False, 1, 59, 3, 2, 2), ([], False, 59001, 59, 3, 2, 2), ([], False, 1, 59, 1, 2, 3),
+ ([("COLOR_LINT", "minor")], False, 1000, 59, 2, 2, 1), ([("SMALL_LOOSE", "major")], False, 1000, 59, 2, 2, 1),
+ ([("COLOR_LINT", "minor"), ("SMALL_LOOSE", "major")], False, 1000, 59, 2, 2, 1),
+ ([("COLOR_DYE", "fatal")], False, 1000, 59, 2, 2, 0), ([("COLOR_DYE", "fatal"), ("SMALL_LOOSE", "major")], False, 1000, 59, 2, 2, 0),
+ ([], True, 1000, 59, 2, 2, 0), ([("COLOR_LINT", "minor")], True, 1000, 59, 2, 2, 0),
 ]
 
 ZONE_CASES = [(62, 69, "light"), (63, 0, "good"), (0, 70, "good"), (81, 90, "good"), (82, 0, "tight"),
@@ -421,8 +428,8 @@ def main():
         if zone(W, B) != z: fail(f"zone({W},{B}) = {zone(W,B)} != {z}")
     for W, wt, j in JAM_CASES:
         if is_jam(W, wt) != j: fail(f"is_jam({W},{wt})")
-    for v, j, t, p, s in STAR_CASES:
-        if stars_for(v, j, t, p) != s: fail(f"stars {v} jam={j} t={t} par={p}")
+    for v, j, t, p, n, mn, st in STAR_CASES:
+        if stars_for(v, j, t, p, n, mn) != st: fail(f"stars {v} jam={j} t={t} par={p} loads={n}/{mn}")
     print("  ok" if ok else "  (see failures)")
 
     print("\n=== RNG self-check ===")
@@ -469,8 +476,9 @@ def export():
           "zones": [{"weight": W, "dryBulk": B, "zone": z} for W, B, z in ZONE_CASES],
           "jam": [{"weight": W, "wetBulkTenths": wt, "jam": j} for W, wt, j in JAM_CASES],
           "cycleCosts": [{"weight": W, "dryBulk": B, "costMs": cycle_ms(W, B)} for W, B in COST_CASES],
-          "stars": [{"violations": [list(x) for x in v], "jam": j, "totalMs": t, "parSeconds": p, "stars": s}
-                    for v, j, t, p, s in STAR_CASES],
+          "stars": [{"violations": [list(x) for x in v], "jam": j, "totalMs": t, "parSeconds": p,
+                    "loads": n, "minLoads": mn, "stars": st}
+                    for v, j, t, p, n, mn, st in STAR_CASES],
           "rng": {
               "fnv1a32": [{"input": s, "hash": fnv1a32(s)} for s in ["", "a", "14010:0:sock_white#1", "12030:hamper"]],
               "mulberry32": [{"seed": s, "u32": (lambda g: [g() for _ in range(4)])(mulberry32(s))} for s in [0, 1, 123456789]],
