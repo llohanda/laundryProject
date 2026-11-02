@@ -7,6 +7,7 @@ describe('hash router', () => {
     ['#/', { name: 'boot' }],
     ['#/levels', { name: 'levels' }],
     ['#/levels/', { name: 'levels' }],
+    ['#/settings', { name: 'settings' }],
     ['#/level/2-3', { name: 'level', id: '2-3' }],
     ['#/level/banana', { name: 'boot' }],
     ['#/nowhere', { name: 'boot' }],
@@ -15,7 +16,7 @@ describe('hash router', () => {
   });
 
   it('round-trips hrefFor through parseRoute', () => {
-    for (const r of [{ name: 'boot' }, { name: 'levels' }, { name: 'level', id: '4-1' }] as const) {
+    for (const r of [{ name: 'boot' }, { name: 'levels' }, { name: 'settings' }, { name: 'level', id: '4-1' }] as const) {
       expect(parseRoute(hrefFor(r))).toEqual(r);
     }
   });

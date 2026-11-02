@@ -4,11 +4,13 @@ import { useEffect, useState } from 'react';
 export type Route =
   | { name: 'boot' }
   | { name: 'levels' }
+  | { name: 'settings' }
   | { name: 'level'; id: string };
 
 export function parseRoute(hash: string): Route {
   const path = hash.replace(/^#/, '').replace(/\/+$/, '');
   if (path === '/levels') return { name: 'levels' };
+  if (path === '/settings') return { name: 'settings' };
   const level = /^\/level\/([1-9]-[1-9])$/.exec(path);
   if (level) return { name: 'level', id: level[1]! };
   return { name: 'boot' };
@@ -18,6 +20,7 @@ export function hrefFor(route: Route): string {
   switch (route.name) {
     case 'boot': return '#/';
     case 'levels': return '#/levels';
+    case 'settings': return '#/settings';
     case 'level': return `#/level/${route.id}`;
   }
 }
