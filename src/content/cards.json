@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "cards": [
+    { "id": "t1_sort", "firstLevel": "1-1", "illustration": "t1_sort", "text": "card.t1_sort" },
+    { "id": "t1_bleed", "firstLevel": "1-2", "illustration": "t1_bleed", "text": "card.t1_bleed" },
+    { "id": "t2_size", "firstLevel": "2-1", "illustration": "t2_size", "text": "card.t2_size" },
+    { "id": "t3_household", "firstLevel": "3-1", "illustration": "t3_household", "text": "card.t3_household" },
+    { "id": "t3_rags", "firstLevel": "3-2", "illustration": "t3_rags", "text": "card.t3_rags" },
+    { "id": "t4_bags", "firstLevel": "4-1", "illustration": "t4_bags", "text": "card.t4_bags" }
+  ]
+}

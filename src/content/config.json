@@ -1,0 +1,14 @@
+{
+  "drumWeight": 90,
+  "drumBulk": 100,
+  "drumWetBulkTenths": 1000,
+  "bagWeight": 2,
+  "bagBulk": 2,
+  "bagBulkCap": 12,
+  "maxBagsPerLoad": 2,
+  "swellTenths": { "low": 10, "medium": 12, "high": 20 },
+  "cycleBaseMs": 6000,
+  "cycleDivisor": 15,
+  "lostThresholdU32": 2147483648,
+  "lintAffectsFlexDark": true
+}

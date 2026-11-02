@@ -1,0 +1,4 @@
+{
+  "//": "rng_reference.js is a CommonJS reference script; keep it runnable with `node tools/rng_reference.js`.",
+  "type": "commonjs"
+}

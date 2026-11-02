@@ -1,0 +1,35 @@
+{
+  "schema": 1,
+  "pages": [
+    {
+      "page": 1,
+      "unlockedBy": "t1_sort",
+      "lines": [
+        { "unlockedBy": "t1_sort", "icons": ["shirt_light", "shirt_dark"], "caption": null },
+        { "unlockedBy": "t1_bleed", "icons": ["tee_red", "drop"], "caption": "rulebook.p1.bleed" }
+      ]
+    },
+    {
+      "page": 2,
+      "unlockedBy": "t2_size",
+      "lines": [
+        { "unlockedBy": "t2_size", "icons": ["drum_zones"], "caption": "rulebook.p2.fill" }
+      ]
+    },
+    {
+      "page": 3,
+      "unlockedBy": "t3_household",
+      "lines": [
+        { "unlockedBy": "t3_household", "icons": ["towel", "sheet", "color_groups"], "caption": null },
+        { "unlockedBy": "t3_rags", "icons": ["rag", "cross", "clean_clothes"], "caption": "rulebook.p3.rags" }
+      ]
+    },
+    {
+      "page": 4,
+      "unlockedBy": "t4_bags",
+      "lines": [
+        { "unlockedBy": "t4_bags", "icons": ["sock", "underwear", "bag"], "caption": "rulebook.p4.bags" }
+      ]
+    }
+  ]
+}
