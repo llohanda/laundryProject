@@ -1,4 +1,4 @@
-// M1 content test (GDD 20, 21). Rule-dependent checks (zero violations, no jam) wait for M2.
+// Content test (GDD 20 M1, 21).
 import { describe, expect, it } from 'vitest';
 import itemsJson from '../content/items.json';
 import levelsJson from '../content/levels.json';
@@ -9,7 +9,7 @@ import stringsJson from '../content/strings.en.json';
 import fixturesJson from '../content/fixtures.json';
 import { baseId, content, ContentError, parseContent, type RawContent } from '../content';
 import { FixturesFile } from './fixturesSchema';
-import type { LevelDef } from '../engine/types';
+import { evaluateLoad, type LevelDef } from '../engine';
 
 const raw: RawContent = {
   items: itemsJson, levels: levelsJson, config: configJson,
@@ -88,7 +88,12 @@ describe.each(content.levels.map((l) => [l.id, l] as const))('level %s', (_id, l
     }
   });
 
-  it.todo('par solution has zero violations and no jam (needs the M2 engine)');
+  it('par solution has zero violations, no jam and no illegal state', () => {
+    for (const load of level.par.solution) {
+      const e = evaluateLoad(content.itemsById, load, content.config);
+      expect({ violations: e.violations, jam: e.jam, illegal: e.illegal }).toEqual({ violations: [], jam: false, illegal: [] });
+    }
+  });
 });
 
 describe('cards and rulebook', () => {

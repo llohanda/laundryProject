@@ -32,9 +32,7 @@ export class ContentError extends Error {
   }
 }
 
-export function baseId(ref: string): string {
-  return ref.split('#')[0]!;
-}
+export { baseId } from '../engine/evaluate';
 
 function duplicates(ids: string[]): string[] {
   const seen = new Set<string>();
